@@ -1,4 +1,4 @@
-# Design to use the OpenAI API to chat with a PDF and txt file
+# Implemenation without PUSH notifications
 
 from dotenv import load_dotenv
 from openai import OpenAI
