@@ -31,6 +31,8 @@ MANIFEST
 .gradio/
 .gradio/certificate.pem
 1_resume-chatbot-llm/data/todo.txt
+3_image-classifier-cnn/traffic/examples/*.png
+3_image-classifier-cnn/traffic/gtsrb/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
