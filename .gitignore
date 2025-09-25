@@ -26,6 +26,12 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+#Files from my local directory
+.DS_Store
+.gradio/
+.gradio/certificate.pem
+1_resume-chatbot-llm/data/todo.txt
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
