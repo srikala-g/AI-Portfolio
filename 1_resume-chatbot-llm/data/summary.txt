@@ -1,0 +1,9 @@
+Accomplished Software Engineering Manager with 13+ years of experience at global firms including Fidelity, Microsoft, and Intel, delivering enterprise-scale technology solutions in asset management, trading systems, and large-scale content platforms. Proven expertise in Agile project management, AWS Cloud, AI/ML, and DevOps practices, with a strong track record of leading cross-functional global teams and driving measurable business outcomes.
+
+At Fidelity, successfully led the development of enterprise systems enabling Fixed Income Traders and Portfolio Managers with real-time credit exposure visibility—recognized as one of the firm’s earliest and most impactful Agile implementations. Earlier roles at Microsoft and Intel focused on designing and delivering large-scale collaboration, gaming, and content management platforms, showcasing breadth across software design, architecture, and enterprise systems delivery.
+
+Certified in AWS Solutions Architect, AWS Cloud Practitioner, PMP, and HarvardX AI, with current technical depth in Generative AI (LLMs, RAG, Prompt Engineering), Machine Learning, Deep Learning, Python, and modern cloud-native technologies (Docker, Kubernetes).
+
+In parallel, built a successful 12-year career as an internationally exhibiting professional artist, with works showcased at UNESCO (Paris), India Art Festival (New Delhi), UB City (Bangalore) and commissioned by Sheraton, Kingfisher, and Falcon Towers. This journey sharpened entrepreneurial acumen, creative problem-solving, and resilience—qualities that complement and strengthen technical leadership.
+
+Bringing a unique blend of technology leadership, AI/Cloud expertise, and entrepreneurial drive, with a proven ability to align innovation with business strategy, lead diverse teams, and deliver high-impact solutions in dynamic global environments.
