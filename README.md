@@ -11,6 +11,7 @@ Welcome! This portfolio highlights a curated collection of my AI and machine lea
 | 3 | [Image Classifier CNN](./3_image-classifier-cnn) | 🖼️ DL | Deep learning model using CNN to classify images. |
 | 4 | [Credit Risk Analyzer](./4_credit-risk-analyzer) | 💰 ML | Predictive modeling for financial credit risk. |
 | 5 | [AI Newsletter Generator](./5_ai-newsletter-generator) | 🧠 Gen AI | Tool that generates a weekly AI newsletter from RSS feeds. |
+| 6 | [Personal Finance Expense Categorizer](./6_personal_finance) | 💰 AI | Automatically categorizes bank transactions into expense categories using text classification. |
 
 ---
 
