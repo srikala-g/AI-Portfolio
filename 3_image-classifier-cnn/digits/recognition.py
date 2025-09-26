@@ -1,3 +1,38 @@
+"""
+Handwritten Digit Recognition Application
+
+This application provides an interactive interface for recognizing handwritten digits
+using a trained neural network model. Users can draw digits on a 28x28 grid and get
+real-time predictions from the model.
+
+Features:
+- Interactive drawing canvas (28x28 pixel grid)
+- Real-time digit classification
+- Reset functionality to clear the canvas
+- Visual feedback with grayscale drawing
+- Model compatibility checking
+
+Requirements:
+- TensorFlow 2.x
+- Pygame
+- NumPy
+- A trained Keras model file (.h5 or .keras format)
+
+Usage:
+    python recognition.py <model_path>
+    
+    Example:
+    python recognition.py model.h5
+
+Controls:
+- Mouse: Click and drag to draw digits on the grid
+- Reset button: Clear the canvas and start over
+- Classify button: Get prediction for the drawn digit
+
+Note: The model should be trained on 28x28 grayscale images for best results.
+The application expects the model to output probabilities for digits 0-9.
+"""
+
 import numpy as np
 import pygame
 import sys

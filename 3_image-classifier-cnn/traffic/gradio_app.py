@@ -1,3 +1,64 @@
+"""
+Traffic Sign Recognition Web Application
+
+SUMMARY:
+This is a Gradio-based web application for real-time traffic sign recognition using a deep learning CNN model.
+The application can identify 43 different types of traffic signs from the German Traffic Sign Recognition 
+Benchmark (GTSRB) dataset. It provides both automatic cropping and simple preprocessing methods for 
+image analysis, along with confidence scores and visualizations.
+
+FEATURES:
+- Upload and analyze traffic sign images (JPG, PNG, PPM formats)
+- Two preprocessing methods: Auto-crop (with contour detection) and Simple resize
+- Real-time prediction with confidence scores
+- Top 3 predictions with confidence visualization
+- Interactive web interface with example images
+- Processed image preview showing the cropped/analyzed region
+
+USAGE INSTRUCTIONS:
+
+1. INSTALLATION:
+   - Ensure you have the required dependencies: gradio, tensorflow, opencv-python, numpy, matplotlib, PIL
+   - Place the trained model file at: model/model-50-dc.h5
+   - Optional: Add example images in the examples/ directory
+
+2. RUNNING THE APPLICATION:
+   - Execute: python gradio_app.py
+   - The app will launch on http://localhost:7860
+   - Use --share flag for public sharing (already enabled in the code)
+
+3. USING THE INTERFACE:
+   - Upload a traffic sign image using the image input component
+   - Choose preprocessing method:
+     * "Auto-crop": Automatically detects and crops the sign using edge detection
+     * "Simple resize": Uses the entire image without cropping
+   - Click "Analyze Traffic Sign" or the analysis will run automatically on upload
+   - View results including:
+     * Predicted traffic sign class
+     * Confidence score
+     * Top 3 predictions with confidence scores
+     * Processed image showing the analyzed region
+     * Confidence visualization chart
+
+4. SUPPORTED IMAGE FORMATS:
+   - JPG/JPEG
+   - PNG
+   - PPM
+
+5. MODEL INFORMATION:
+   - Input size: 30x30 pixels
+   - 43 traffic sign classes
+   - CNN architecture with dropout and data augmentation
+   - Trained on GTSRB dataset
+
+TECHNICAL DETAILS:
+- Uses OpenCV for image preprocessing and contour detection
+- TensorFlow/Keras for model inference
+- Matplotlib for confidence score visualization
+- Gradio for the web interface
+- Supports both automatic cropping and simple preprocessing workflows
+"""
+
 import gradio as gr
 import numpy as np
 import cv2

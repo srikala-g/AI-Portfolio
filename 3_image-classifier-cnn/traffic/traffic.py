@@ -1,3 +1,39 @@
+"""
+Traffic Sign Recognition CNN Model
+
+This script implements a Convolutional Neural Network (CNN) for traffic sign recognition
+using the German Traffic Sign Recognition Benchmark (GTSRB) dataset. The model uses
+a multi-layer CNN architecture with convolutional layers, max pooling, and dense layers
+to classify traffic signs into 43 different categories.
+
+Features:
+- Loads traffic sign images from organized directory structure
+- Preprocesses images (resize to 30x30, normalize to [0,1])
+- Implements CNN with 2 convolutional layers + 2 dense layers
+- Uses categorical crossentropy loss and Adam optimizer
+- Supports model training and evaluation
+- Saves trained model to file
+
+Usage:
+    python traffic.py data_directory [model.h5]
+    
+Arguments:
+    data_directory: Path to directory containing traffic sign images
+                   Expected structure: data_directory/0/, data_directory/1/, ..., data_directory/42/
+                   Each subdirectory contains images for that traffic sign category
+    model.h5: (Optional) Filename to save the trained model
+    
+Example:
+    python traffic.py gtsrb/ traffic_model.h5
+    
+Requirements:
+    - TensorFlow
+    - OpenCV (cv2)
+    - NumPy
+    - scikit-learn
+    - Traffic sign dataset with 43 categories (0-42)
+"""
+
 import cv2
 import numpy as np
 import os

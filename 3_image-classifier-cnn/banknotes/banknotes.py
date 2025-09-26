@@ -1,3 +1,46 @@
+"""
+Banknote Authentication Neural Network
+
+This script implements a neural network to classify banknotes as authentic or counterfeit
+based on four statistical features extracted from banknote images. The model uses a
+simple feedforward neural network with one hidden layer to perform binary classification.
+
+Features:
+- Variance of Wavelet Transformed image
+- Skewness of Wavelet Transformed image  
+- Kurtosis of Wavelet Transformed image
+- Entropy of image
+
+Usage Instructions:
+1. Ensure you have the required dependencies installed:
+   pip install tensorflow scikit-learn
+
+2. Place the 'banknotes.csv' file in the same directory as this script.
+   The CSV should have 5 columns: 4 feature columns + 1 label column (0=authentic, 1=counterfeit)
+
+3. Run the script:
+   python banknotes.py
+
+4. The script will:
+   - Load and preprocess the banknote data
+   - Split data into training (60%) and testing (40%) sets
+   - Train a neural network with 8 hidden units
+   - Evaluate model performance on test data
+   - Display accuracy metrics
+
+Expected Output:
+- Training progress for 20 epochs
+- Final test accuracy and loss metrics
+- Press Enter prompt to exit
+
+Model Architecture:
+- Input layer: 4 features
+- Hidden layer: 8 units with ReLU activation
+- Output layer: 1 unit with sigmoid activation (binary classification)
+- Optimizer: Adam
+- Loss function: Binary crossentropy
+"""
+
 import csv
 import tensorflow as tf
 import pprint as pp
