@@ -1,0 +1,8 @@
+# Nim Game with Q-Learning AI
+# This project uses only Python standard library modules
+# No external dependencies required
+
+# Optional: Add these if you want to enhance the project
+# numpy>=1.21.0
+# matplotlib>=3.5.0
+# jupyter>=1.0.0
