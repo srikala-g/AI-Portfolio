@@ -1,3 +1,34 @@
+"""
+N-gram Frequency Analyzer
+
+This script analyzes text corpora to find the most frequent n-grams (sequences of n consecutive words).
+It processes all text files in a given directory, tokenizes the content, and returns the top 10 most
+common n-gram sequences.
+
+INPUT INSTRUCTIONS:
+    Usage: python ngrams.py <n> <corpus_directory>
+    
+    Parameters:
+    - n: The size of n-grams to analyze (e.g., 1 for unigrams, 2 for bigrams, 3 for trigrams)
+    - corpus_directory: Path to directory containing text files to analyze
+    
+    Example:
+    python ngrams.py 2 ./text_files/
+    
+    This will find the most common bigrams (2-word sequences) in all text files within ./text_files/
+
+FEATURES:
+    - Processes multiple text files in a directory
+    - Tokenizes text using NLTK
+    - Filters to keep only words containing alphabetic characters
+    - Converts all text to lowercase for consistent analysis
+    - Returns top 10 most frequent n-grams with their counts
+
+REQUIREMENTS:
+    - NLTK library for text processing
+    - Text files in the specified directory
+"""
+
 from collections import Counter
 
 import math
