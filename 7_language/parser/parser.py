@@ -1,3 +1,29 @@
+"""
+Natural Language Parser using Context-Free Grammar
+
+This script implements a natural language parser using NLTK's ChartParser with a 
+custom Context-Free Grammar (CFG). It can parse sentences and extract noun phrase 
+chunks from the parsed syntax trees.
+
+Features:
+- Parses sentences using a predefined grammar with terminals and non-terminals
+- Extracts noun phrase chunks from parsed syntax trees
+- Supports both file input and interactive sentence input
+- Preprocesses text by converting to lowercase and filtering non-alphabetic words
+
+Input Instructions:
+1. Run with a text file: python parser.py <filename>
+   - The file should contain a single sentence to parse
+2. Run interactively: python parser.py
+   - Enter a sentence when prompted
+3. Example sentences that work with the grammar:
+   - "Holmes sat down and lit his pipe"
+   - "The little red door opened"
+   - "She smiled and walked home"
+
+The parser will display the syntax tree and extract noun phrase chunks.
+"""
+
 import nltk
 import sys
 

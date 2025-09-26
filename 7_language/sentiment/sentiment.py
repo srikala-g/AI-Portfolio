@@ -1,3 +1,28 @@
+"""
+Sentiment Analysis Tool
+
+This script performs sentiment analysis on text using a Naive Bayes classifier.
+It trains a model on positive and negative text samples, then classifies new text input.
+
+Features:
+- Loads training data from positive and negative text files
+- Extracts word features from documents
+- Trains a Naive Bayes classifier using NLTK
+- Classifies new text and provides probability scores for each sentiment
+
+Input Instructions:
+- Run the script with: python sentiment.py <corpus_directory>
+- The corpus directory should contain:
+  - positives.txt: One positive text sample per line
+  - negatives.txt: One negative text sample per line
+- After training, enter text to classify when prompted
+
+Example usage:
+    python sentiment.py ./corpus
+    s: This movie is amazing!
+    Output: Positive: 0.8234, Negative: 0.1766
+"""
+
 import nltk
 import os
 import sys
