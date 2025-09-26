@@ -1,4 +1,51 @@
-# Implemenation with PUSH notifications
+"""
+Resume Chatbot with Push Notifications
+=====================================
+
+A Gradio-based interactive resume chatbot that allows visitors to have conversations
+with an AI representation of Srikala Gangi Reddy. The chatbot can answer questions
+about career background, skills, and experience, while also collecting user information
+and recording unanswered questions via push notifications.
+
+Features:
+- Interactive chat interface using Gradio
+- PDF resume parsing and LinkedIn profile integration
+- Push notification system for user engagement tracking
+- Tool-based function calling for data collection
+- Professional AI persona representation
+
+Usage Instructions:
+------------------
+1. Prerequisites:
+   - Install required dependencies: pip install -r requirements.txt
+   - Set up environment variables in .env file:
+     * OPENAI_API_KEY: Your OpenAI API key
+     * PUSHOVER_TOKEN: Your Pushover app token
+     * PUSHOVER_USER: Your Pushover user key
+
+2. Required Files:
+   - data/resume.pdf: Your resume in PDF format
+   - data/summary.txt: A text summary of your background
+
+3. Running the Application:
+   - Execute: python app.py
+   - The Gradio interface will launch in your browser
+   - Share the public URL to allow others to interact with your resume chatbot
+
+4. Functionality:
+   - Users can ask questions about your background and experience
+   - The chatbot will attempt to answer based on your resume and summary
+   - Unknown questions are recorded via push notifications
+   - User contact information is collected and sent via push notifications
+   - Professional conversation steering towards email contact
+
+5. Customization:
+   - Modify the 'name' variable in the Me class to change the persona
+   - Update the system prompt to adjust conversation style
+   - Add or modify tools for different data collection needs
+"""
+
+# Implementation with PUSH notifications
 from dotenv import load_dotenv
 from openai import OpenAI
 import json

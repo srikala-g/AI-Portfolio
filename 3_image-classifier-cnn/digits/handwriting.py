@@ -1,3 +1,29 @@
+"""
+Handwriting Recognition using Convolutional Neural Network (CNN)
+
+This script implements a CNN model to classify handwritten digits from the MNIST dataset.
+The model uses a convolutional neural network architecture with:
+- Conv2D layer with 32 filters (3x3 kernel)
+- MaxPooling2D layer (2x2 pool size)
+- Dense hidden layer (128 units) with dropout
+- Output layer (10 units for digits 0-9)
+
+The model is trained on the MNIST dataset and can be saved to a file for later use.
+
+Usage:
+    python handwriting.py                    # Train and evaluate model (no saving)
+    python handwriting.py model_name.h5     # Train, evaluate, and save model to specified file
+
+Requirements:
+    - tensorflow
+    - numpy (installed with tensorflow)
+
+Output:
+    - Training progress and accuracy metrics
+    - Test set evaluation results
+    - Optional: Saved model file (.h5 format)
+"""
+
 import sys
 import tensorflow as tf
 import pprint as pp
