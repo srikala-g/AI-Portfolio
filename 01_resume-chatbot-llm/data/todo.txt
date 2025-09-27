@@ -1,0 +1,4 @@
+1.Make sure the chatbot is not hallucinating and making up stories 
+2. Check push_over notifications
+3. Check hugging face - restart workspace
+4. Don’t reveal personal information. Redirect to LinkedIn

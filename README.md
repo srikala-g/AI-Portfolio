@@ -1,94 +1,47 @@
-# AI-Portfolio
+# 🤖 AI Portfolio
 
-Welcome! This portfolio showcases a comprehensive collection of my AI, machine learning, and computer science projects. Each folder contains a standalone, production-ready project with its own README, code, and assets.
+Welcome to my AI and Machine Learning portfolio! This repository showcases my journey in artificial intelligence, from production-ready applications to experimental projects.
 
-## 🎯 Project Categories
+## 🚀 Production Ready Projects
 
-### 🤖 **Large Language Models & Generative AI**
-| # | Project | Type | Description |
-|--|---------|------|-------------|
-| 1 | [Resume Chatbot LLM](./1_resume-chatbot-llm) | 🤖 LLM | Chatbot that answers questions from your resume using LangChain + GPT. |
-| 5 | [AI Newsletter Generator](./5_ai-newsletter-generator) | 🧠 Gen AI | Tool that generates a weekly AI newsletter from RSS feeds. |
+These projects are fully functional, well-documented, and ready for deployment:
 
-### 🧠 **Machine Learning & Deep Learning**
-| # | Project | Type | Description |
-|--|---------|------|-------------|
-| 2 | [Fake News Detector](./2_fake-news-detector) | 📰 ML | Classifier to detect fake news using traditional ML pipelines. |
-| 3 | [Image Classifier CNN](./3_image-classifier-cnn) | 🖼️ DL | Deep learning model using CNN to classify images. |
-| 4 | [Credit Risk Analyzer](./4_credit-risk-analyzer) | 💰 ML | Predictive modeling for financial credit risk. |
-| 6 | [Personal Finance Expense Categorizer](./6_personal_finance) | 💰 AI | Automatically categorizes bank transactions into expense categories using text classification. |
+| Project | Type | Description |
+|---------|------|-------------|
+| [01 - Resume Chatbot LLM](./01_resume-chatbot-llm) | 🤖 LLM | Interactive chatbot that answers questions about your resume using LangChain + GPT |
+| [02 - Image Classifier CNN](./02_image-classifier-cnn) | 🖼️ Deep Learning | CNN-based image classification with multiple datasets (digits, banknotes, traffic signs) |
 
-### 🗣️ **Natural Language Processing**
-| # | Project | Type | Description |
-|--|---------|------|-------------|
-| 7 | [Language Processing Suite](./7_language) | 🗣️ NLP | Collection of NLP projects including BERT attention visualization, sentiment analysis, n-grams, and text generation. |
+## 🔧 Work in Progress
 
-### 🎮 **AI Game Playing & Model Training**
-| # | Project | Type | Description |
-|--|---------|------|-------------|
-| 8 | [Model Training & Games](./8_model_training) | 🎮 AI | Q-learning implementations for game playing (Nim) and shopping recommendation systems. |
+These projects are under active development and experimentation:
 
-### 🔍 **Optimization & Constraint Satisfaction**
-| # | Project | Type | Description |
-|--|---------|------|-------------|
-| 9 | [Optimization Problems](./9_optimization) | 🔍 Opt | Constraint satisfaction problems including crossword solving, hospital scheduling, and production optimization. |
+| Project | Type | Description |
+|---------|------|-------------|
+| [Credit Risk Analyzer](./credit-risk-analyzer) | 💰 ML | Predictive modeling for financial credit risk assessment |
+| [Fake News Detector](./fake-news-detector) | 📰 ML | Machine learning classifier to detect fake news articles |
+| [AI Newsletter Generator](./ai-newsletter-generator) | 🧠 Gen AI | Automated newsletter generation from RSS feeds |
+| [Personal Finance Tracker](./personal_finance) | 💰 AI | Smart expense categorization using text classification |
+| [Language Processing](./language) | 🗣️ NLP | Various natural language processing experiments |
+| [Model Training](./model_training) | 🎯 ML | Machine learning model training and optimization |
+| [Optimization Algorithms](./optimization) | ⚡ Algorithms | Constraint satisfaction and optimization problems |
+| [Uncertainty & Probability](./uncertainity) | 🎲 Stats | Bayesian networks, HMMs, and probabilistic reasoning |
+| [Knowledge Representation](./knowledge) | 🧩 Logic | Logic puzzles, constraint satisfaction, and reasoning |
+| [Search Algorithms](./search) | 🔍 Algorithms | Graph search, pathfinding, and game AI |
 
-### 🎲 **Probabilistic AI & Uncertainty**
-| # | Project | Type | Description |
-|--|---------|------|-------------|
-| 10 | [Uncertainty & Probability](./10_uncertainity) | 🎲 Prob | Bayesian networks, Hidden Markov Models, PageRank algorithm, and genetic inheritance modeling. |
+## 🛠️ Tech Stack
 
-### 🧩 **Knowledge Representation & Logic**
-| # | Project | Type | Description |
-|--|---------|------|-------------|
-| 11 | [Knowledge & Logic](./11_knowledge) | 🧩 Logic | Propositional logic framework, puzzle solving (Knights, Mastermind), and Minesweeper AI. |
+- **Languages**: Python
+- **ML/DL**: Scikit-learn, TensorFlow, PyTorch
+- **LLM**: LangChain, OpenAI GPT, Hugging Face
+- **Web**: Streamlit, Gradio
+- **Data**: Pandas, NumPy, Matplotlib
 
-### 🔍 **Search Algorithms & Pathfinding**
-| # | Project | Type | Description |
-|--|---------|------|-------------|
-| 12 | [Search & Pathfinding](./12_search) | 🔍 Search | Graph algorithms including degrees of separation, maze solving, and Tic-Tac-Toe with minimax. |
+## 📬 Connect
 
-## 🛠️ **Technical Stack**
+Let's connect and discuss AI! 
 
-### **Languages & Frameworks**
-- **Python** - Primary development language
-- **TensorFlow/Keras** - Deep learning models
-- **PyTorch** - Neural network implementations
-- **Scikit-learn** - Traditional ML algorithms
-- **LangChain** - LLM application framework
-
-### **AI/ML Libraries**
-- **Hugging Face Transformers** - Pre-trained models
-- **OpenAI API** - GPT integration
-- **Pomegranate** - Probabilistic modeling
-- **NLTK** - Natural language processing
-- **SpaCy** - Advanced NLP
-
-### **Web & Deployment**
-- **Streamlit** - Interactive web applications
-- **Gradio** - ML model interfaces
-- **Flask** - Web framework
-- **Docker** - Containerization
-
-### **Data & Visualization**
-- **Pandas** - Data manipulation
-- **NumPy** - Numerical computing
-- **Matplotlib/Seaborn** - Data visualization
-- **Plotly** - Interactive visualizations
-
-## 📊 **Project Statistics**
-- **Total Projects**: 12 comprehensive implementations
-- **AI Categories**: 6 different AI/ML domains
-- **Languages**: Python (primary), JavaScript (web interfaces)
-- **Deployment**: Production-ready applications with Docker support
-
-## 🚀 **Key Features**
-- ✅ **Production-Ready**: Each project includes proper error handling, documentation, and deployment configurations
-- ✅ **Modular Design**: Clean, object-oriented code with separation of concerns
-- ✅ **Comprehensive Testing**: Unit tests and validation for critical components
-- ✅ **Interactive Demos**: Web interfaces and command-line tools for easy testing
-- ✅ **Educational Value**: Well-documented code with clear explanations and examples
+[LinkedIn](https://www.linkedin.com/in/srikala-gangi-reddy/) | [GitHub](https://github.com/srikala)
 
 ---
 
-📬 **Connect with me on [LinkedIn](https://www.linkedin.com/in/srikala-gangi-reddy/)** 
+*Each project includes detailed README files, requirements, and example usage. Feel free to explore and provide feedback!*
