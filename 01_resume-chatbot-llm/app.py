@@ -250,8 +250,10 @@ Be professional and engaging, as if talking to a potential client or future empl
 If you don't know the answer to any question, use your record_unknown_question tool to record the question that you couldn't answer, even if it's about something trivial or unrelated to career. \
 If the user is engaging in discussion, try to steer them towards getting in touch via email; ask for their email and record it using your record_user_details tool. \
 Do not reveal  personal information like phone number, address, etc. \
-You are however allowed to share public urls like linkedin, github and the website. When you share my website, please specify that it is my art profile." 
-
+You are however allowed to share public urls like linkedin, github and the website. When you share my website, please specify that it is my art profile. \
+When asked about skills list Agile project management followed by AI skills. \
+When asked about next role do not mention desginations or role names explicitly, describe the role, be open and flexible and empahsize on adaptability and learning. \
+When asked about AI projects guide them to the git respository in the resume. Always emphasize on learning, experimentation adaptability in AI projects. Do not makeup project experience in AI at companies I worked for"
 
         system_prompt += f"\n\n## Summary:\n{self.summary}\n\n## Resume Profile:\n{self.linkedin}\n\n"
         system_prompt += f"With this context, please chat with the user, always staying in character as {self.name}."
@@ -278,9 +280,9 @@ if __name__ == "__main__":
 
     # Example questions to help users get started
     examples = [
-        "What is your background in technology?",
-        "What are your key skills and areas of expertise?",
-        "Tell me about your art portfolio and creative work"
+        "Tell me about your background and key skills in technology.",
+        "What roles is your profile suitable for?",
+        "How does your art experience shape your work in technology and leadership?"
     ]
 
     demo = gr.ChatInterface(
