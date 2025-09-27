@@ -40,7 +40,7 @@ These projects are under active development and experimentation:
 
 Let's connect and discuss AI! 
 
-[LinkedIn](https://www.linkedin.com/in/srikala-gangi-reddy/) | [GitHub](https://github.com/srikala)
+[LinkedIn](https://www.linkedin.com/in/srikala-gangi-reddy/) | [GitHub](https://github.com/srikala-g/AI-Portfolio)
 
 ---
 
