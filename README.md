@@ -30,4 +30,4 @@ ML/AI projects from production-ready applications to experimental work.
 
 ## Connect
 
-[LinkedIn](https://www.linkedin.com/in/srikala-gangi-reddy/) • [GitHub](https://github.com/srikala-g/AI-Portfolio)
+[LinkedIn](https://www.linkedin.com/in/srikala-gangi-reddy/) • [GitHub](https://github.com/srikala-g/)
