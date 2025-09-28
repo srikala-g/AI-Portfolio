@@ -53,29 +53,11 @@ import os
 import requests
 from pypdf import PdfReader
 import gradio as gr
-import logging
 from typing import Optional
 
 
 load_dotenv(override=True)
 
-# Configure logging for Hugging Face Spaces
-import os
-from datetime import datetime
-
-# Create logs directory if it doesn't exist
-os.makedirs("logs", exist_ok=True)
-
-# Configure logging with both console and file output
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/app.log'),
-        logging.StreamHandler()  # Console output for Hugging Face Spaces
-    ]
-)
-logger = logging.getLogger(__name__)
 
 def push(text: str) -> bool:
     """
@@ -93,7 +75,6 @@ def push(text: str) -> bool:
         user = os.getenv("PUSHOVER_USER")
         
         if not token or not user:
-            logger.warning("Pushover credentials not configured. Skipping notification.")
             return False
             
         response = requests.post(
@@ -108,23 +89,17 @@ def push(text: str) -> bool:
         
         # Check if the request was successful
         if response.status_code == 200:
-            logger.info("Push notification sent successfully")
             return True
         else:
-            logger.error(f"Pushover API error: {response.status_code} - {response.text}")
             return False
             
     except requests.exceptions.Timeout:
-        logger.error("Pushover API request timed out")
         return False
     except requests.exceptions.ConnectionError:
-        logger.error("Failed to connect to Pushover API")
         return False
     except requests.exceptions.RequestException as e:
-        logger.error(f"Pushover API request failed: {str(e)}")
         return False
     except Exception as e:
-        logger.error(f"Unexpected error sending push notification: {str(e)}")
         return False
 
 
@@ -137,15 +112,10 @@ def record_user_details(email, name="Name not provided", notes="not provided"):
         message = f"Recording {name} with email {email} and notes {notes}"
         push_success = push(message)
         
-        if push_success:
-            logger.info(f"User details recorded and notification sent: {name} ({email})")
-        else:
-            logger.warning(f"User details recorded but notification failed: {name} ({email})")
             
         return {"recorded": "ok", "notification_sent": push_success}
         
     except Exception as e:
-        logger.error(f"Error recording user details: {str(e)}")
         # Still return success to not break the chat flow
         return {"recorded": "ok", "notification_sent": False, "error": str(e)}
 
@@ -158,15 +128,10 @@ def record_unknown_question(question):
         message = f"Recording unknown question: {question}"
         push_success = push(message)
         
-        if push_success:
-            logger.info(f"Unknown question recorded and notification sent: {question}")
-        else:
-            logger.warning(f"Unknown question recorded but notification failed: {question}")
             
         return {"recorded": "ok", "notification_sent": push_success}
         
     except Exception as e:
-        logger.error(f"Error recording unknown question: {str(e)}")
         # Still return success to not break the chat flow
         return {"recorded": "ok", "notification_sent": False, "error": str(e)}
 
@@ -287,14 +252,14 @@ if __name__ == "__main__":
 
     demo = gr.ChatInterface(
         fn=me.chat,
-        type="messages",
         title="Srikala Gangi Reddy: Interactive Resume",
         description=(
             "Hello! I'm Srikala Gangi Reddy. You can have a conversation with me about my background and experience in technology and art. "
-            "Feel free to ask me about my skills, projects, or career journey. Click on the example questions below to get started!"
+            "Feel free to ask me about my skills, projects, or career journey."
         ),
         examples=examples,
         theme="soft",
+        type="messages"
     )
-demo.launch(share=True)
+demo.launch()
     
