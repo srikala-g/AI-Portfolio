@@ -33,6 +33,14 @@ except ImportError:
     gr = None  # Set gr to None when not available
     print("Gradio not available. Install with: pip install gradio")
 
+# Ollama imports
+try:
+    import requests as ollama_requests
+    OLLAMA_AVAILABLE = True
+except ImportError:
+    OLLAMA_AVAILABLE = False
+    print("Ollama requests not available.")
+
 
 class Website:
     """
@@ -134,28 +142,120 @@ class WebsiteSelenium:
             self.driver.quit()
 
 
+def call_openai_api(messages, model="gpt-4o-mini"):
+    """
+    Make API call to OpenAI.
+    
+    Args:
+        messages (list): List of message dictionaries
+        model (str): OpenAI model to use
+        
+    Returns:
+        str: Response content from OpenAI
+    """
+    try:
+        openai = OpenAI()
+        response = openai.chat.completions.create(
+            model=model,
+            messages=messages
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        raise Exception(f"OpenAI API error: {str(e)}")
+
+
+def call_ollama_api(messages, model="llama3.2", base_url="http://localhost:11434"):
+    """
+    Make API call to Ollama.
+    
+    Args:
+        messages (list): List of message dictionaries
+        model (str): Ollama model to use
+        base_url (str): Ollama server URL
+        
+    Returns:
+        str: Response content from Ollama
+    """
+    if not OLLAMA_AVAILABLE:
+        raise ImportError("Ollama requests not available")
+    
+    try:
+        # Convert messages to Ollama format
+        prompt = ""
+        for msg in messages:
+            if msg["role"] == "system":
+                prompt += f"System: {msg['content']}\n\n"
+            elif msg["role"] == "user":
+                prompt += f"User: {msg['content']}\n\n"
+            elif msg["role"] == "assistant":
+                prompt += f"Assistant: {msg['content']}\n\n"
+        
+        prompt += "Assistant:"
+        
+        # Make request to Ollama
+        response = ollama_requests.post(
+            f"{base_url}/api/generate",
+            json={
+                "model": model,
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=60
+        )
+        
+        if response.status_code == 200:
+            return response.json()["response"]
+        else:
+            raise Exception(f"Ollama API error: {response.status_code} - {response.text}")
+            
+    except Exception as e:
+        raise Exception(f"Ollama API error: {str(e)}")
+
+
 class WebsiteSummarizer:
     """
-    A class to handle website summarization using OpenAI.
+    A class to handle website summarization using OpenAI or Ollama.
     """
     
-    def __init__(self):
-        """Initialize the summarizer with OpenAI client."""
-        # Load environment variables
-        load_dotenv(override=True)
-        api_key = os.getenv('OPENAI_API_KEY')
+    def __init__(self, model_provider="openai"):
+        """
+        Initialize the summarizer with specified model provider.
         
-        if not api_key:
-            raise ValueError("No API key was found - please check your .env file!")
-        elif not api_key.startswith("sk-proj-"):
-            raise ValueError("API key doesn't start with 'sk-proj-' - please check your key!")
-        elif api_key.strip() != api_key:
-            raise ValueError("API key has whitespace - please remove spaces/tabs!")
-        
-        self.openai = OpenAI()
+        Args:
+            model_provider (str): Either "openai" or "ollama"
+        """
+        self.model_provider = model_provider
         self.system_prompt = ("You are an assistant that analyzes the contents of a website "
                              "and provides a short summary, ignoring text that might be navigation related. "
                              "Respond in markdown.")
+        
+        if model_provider == "openai":
+            # Load environment variables
+            load_dotenv(override=True)
+            api_key = os.getenv('OPENAI_API_KEY')
+            
+            if not api_key:
+                raise ValueError("No OpenAI API key found - please check your .env file!")
+            elif not api_key.startswith("sk-proj-"):
+                raise ValueError("OpenAI API key doesn't start with 'sk-proj-' - please check your key!")
+            elif api_key.strip() != api_key:
+                raise ValueError("OpenAI API key has whitespace - please remove spaces/tabs!")
+            
+            self.openai = OpenAI()
+            
+        elif model_provider == "ollama":
+            if not OLLAMA_AVAILABLE:
+                raise ImportError("Ollama not available. Make sure Ollama is installed and running.")
+            
+            # Test Ollama connection
+            try:
+                response = ollama_requests.get("http://localhost:11434/api/tags", timeout=5)
+                if response.status_code != 200:
+                    raise Exception("Ollama server not responding")
+            except Exception as e:
+                raise Exception(f"Cannot connect to Ollama server: {str(e)}")
+        else:
+            raise ValueError("model_provider must be 'openai' or 'ollama'")
     
     def user_prompt_for(self, website):
         """
@@ -200,11 +300,14 @@ class WebsiteSummarizer:
             str: The AI-generated summary of the website
         """
         website = Website(url)
-        response = self.openai.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=self.messages_for(website)
-        )
-        return response.choices[0].message.content
+        messages = self.messages_for(website)
+        
+        if self.model_provider == "openai":
+            return call_openai_api(messages)
+        elif self.model_provider == "ollama":
+            return call_ollama_api(messages)
+        else:
+            raise ValueError(f"Unknown model provider: {self.model_provider}")
     
     def summarize_with_selenium(self, url, headless=True, wait_time=10):
         """
@@ -222,11 +325,14 @@ class WebsiteSummarizer:
             raise ImportError("Selenium is not installed. Install with: pip install selenium")
         
         website = WebsiteSelenium(url, headless=headless, wait_time=wait_time)
-        response = self.openai.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=self.messages_for(website)
-        )
-        return response.choices[0].message.content
+        messages = self.messages_for(website)
+        
+        if self.model_provider == "openai":
+            return call_openai_api(messages)
+        elif self.model_provider == "ollama":
+            return call_ollama_api(messages)
+        else:
+            raise ValueError(f"Unknown model provider: {self.model_provider}")
     
     def summarize_auto(self, url, try_selenium_first=False):
         """

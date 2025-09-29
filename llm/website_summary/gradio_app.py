@@ -8,6 +8,7 @@ Run with: python gradio_app.py
 
 import os
 import sys
+import time
 from dotenv import load_dotenv
 
 # Add the current directory to Python path
@@ -26,42 +27,84 @@ import gradio as gr
 # Load environment variables
 load_dotenv()
 
-def gradio_summarize(url, method):
+def gradio_summarize(url, method, model_provider, progress=gr.Progress()):
     """
-    Gradio interface function for website summarization.
+    Gradio interface function for website summarization with progress tracking.
     
     Args:
         url (str): URL to summarize
         method (str): Scraping method ('HTTP Scraping', 'Selenium Scraping', 'Auto Mode')
+        model_provider (str): Model provider ('OpenAI', 'Ollama 3.2')
+        progress: Gradio progress tracker
         
     Returns:
-        str: Summary of the website or error message
+        tuple: (summary, status_message)
     """
     if not url.strip():
-        return "Please enter a URL to summarize."
+        return "Please enter a URL to summarize.", "❌ No URL provided"
     
     # Add https:// if missing
     if not url.startswith(('http://', 'https://')):
         url = 'https://' + url
     
+    start_time = time.time()
+    
     try:
-        summarizer = WebsiteSummarizer()
+        # Convert model provider selection
+        if model_provider == "OpenAI":
+            provider = "openai"
+        elif model_provider == "Ollama 3.2":
+            provider = "ollama"
+        else:
+            return f"❌ Unknown model provider: {model_provider}", "❌ Invalid model selection"
+        
+        # Show initial progress
+        progress(0.1, desc="Initializing...")
+        
+        summarizer = WebsiteSummarizer(model_provider=provider)
+        
+        # Show scraping progress
+        progress(0.3, desc="Scraping website...")
         
         if method == "HTTP Scraping":
             summary = summarizer.summarize(url)
         elif method == "Selenium Scraping":
             if not SELENIUM_AVAILABLE:
-                return "❌ **Selenium not available**\n\nPlease install with: `pip install selenium`"
+                return "❌ **Selenium not available**\n\nPlease install with: `pip install selenium`", "❌ Selenium not installed"
+            progress(0.4, desc="Running Selenium browser...")
             summary = summarizer.summarize_with_selenium(url, headless=True)
         elif method == "Auto Mode":
             summary = summarizer.summarize_auto(url)
         else:
-            return f"❌ Unknown method: {method}"
+            return f"❌ Unknown method: {method}", "❌ Invalid method"
         
-        return f"**URL:** {url}\n\n**Summary:**\n{summary}"
+        # Show AI processing progress
+        progress(0.7, desc="AI processing...")
+        
+        # Calculate response time
+        end_time = time.time()
+        response_time = end_time - start_time
+        
+        # Format response time
+        if response_time < 1:
+            time_str = f"{response_time:.2f} seconds"
+        else:
+            time_str = f"{response_time:.1f} seconds"
+        
+        # Complete progress
+        progress(1.0, desc="Complete!")
+        
+        # Format final output
+        output = f"**URL:** {url}\n\n**Model:** {model_provider}\n\n**Response Time:** {time_str}\n\n**Summary:**\n{summary}"
+        status = f"✅ Completed in {time_str}"
+        
+        return output, status
         
     except Exception as e:
-        return f"❌ **Error:** {str(e)}"
+        end_time = time.time()
+        response_time = end_time - start_time
+        error_msg = f"❌ **Error after {response_time:.1f}s:** {str(e)}"
+        return error_msg, f"❌ Failed after {response_time:.1f}s"
 
 
 def create_interface():
@@ -105,7 +148,12 @@ def create_interface():
                 method_dropdown = gr.Dropdown(
                     choices=["Auto Mode", "HTTP Scraping", "Selenium Scraping"],
                     value="Auto Mode",
-                    label="Method"
+                    label="Scraping Method"
+                )
+                model_dropdown = gr.Dropdown(
+                    choices=["OpenAI", "Ollama 3.2"],
+                    value="OpenAI",
+                    label="AI Model"
                 )
                 submit_btn = gr.Button("Summarize", variant="primary")
             
@@ -118,40 +166,47 @@ def create_interface():
                     gr.Button("Anthropic.com", size="sm")
                 ]
                 
-                # Example URLs and methods
+                # Example URLs, methods, and models
                 example_data = [
-                    ("https://openai.com", "Selenium Scraping"),
-                    ("https://cnn.com", "HTTP Scraping"),
-                    ("https://anthropic.com", "Auto Mode")
+                    ("https://openai.com", "Selenium Scraping", "OpenAI"),
+                    ("https://cnn.com", "HTTP Scraping", "Ollama 3.2"),
+                    ("https://anthropic.com", "Auto Mode", "OpenAI")
                 ]
                 
                 # Connect example buttons to inputs
-                for i, (url, method) in enumerate(example_data):
+                for i, (url, method, model) in enumerate(example_data):
                     example_buttons[i].click(
-                        lambda u=url, m=method: (u, m),
-                        outputs=[url_input, method_dropdown]
+                        lambda u=url, m=method, mod=model: (u, m, mod),
+                        outputs=[url_input, method_dropdown, model_dropdown]
                     )
         
         # Bottom - Output
         with gr.Row():
-            output = gr.Markdown(
-                label="Summary",
-                show_copy_button=True,
-                elem_classes="compact-output"
-            )
+            with gr.Column(scale=3):
+                output = gr.Markdown(
+                    label="Summary",
+                    show_copy_button=True,
+                    elem_classes="compact-output"
+                )
+            with gr.Column(scale=1):
+                status = gr.Textbox(
+                    label="Status",
+                    interactive=False,
+                    value="Ready to summarize..."
+                )
         
         # Connect submit button
         submit_btn.click(
             gradio_summarize,
-            inputs=[url_input, method_dropdown],
-            outputs=output
+            inputs=[url_input, method_dropdown, model_dropdown],
+            outputs=[output, status]
         )
         
         # Also allow Enter key submission
         url_input.submit(
             gradio_summarize,
-            inputs=[url_input, method_dropdown],
-            outputs=output
+            inputs=[url_input, method_dropdown, model_dropdown],
+            outputs=[output, status]
         )
     
     return interface
