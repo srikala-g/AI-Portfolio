@@ -1,0 +1,6 @@
+openai>=1.0.0
+gradio>=5.22.0
+pillow>=9.0.0
+numpy>=1.21.0
+python-dotenv>=0.19.0
+simpleaudio>=0.1.7
