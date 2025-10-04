@@ -74,22 +74,14 @@ I recorded this playlist on YouTube with more on parameters, training and infere
 https://www.youtube.com/playlist?list=PLWHe-9GP9SMMdl6SLaovUQF2abiLGbMjs
 """
 
-# if this gives an "ERROR" about pip dependency conflicts, ignore it! It doesn't affect anything.
-
-!pip install -q --upgrade torch==2.5.1+cu124 torchvision==0.20.1+cu124 torchaudio==2.5.1+cu124 --index-url https://download.pytorch.org/whl/cu124
-
-!pip install -q --upgrade transformers==4.48.3 datasets==3.2.0 diffusers
-
 # Imports
-
 import torch
-from google.colab import userdata
+import os
 from huggingface_hub import login
 from transformers import pipeline
 from diffusers import DiffusionPipeline
 from datasets import load_dataset
 import soundfile as sf
-from IPython.display import Audio
 
 """# Important Note
 
@@ -109,30 +101,42 @@ I didn't mention this in the lecture, but you may need to log in to the HuggingF
 But this isn't a best practice, as you'd have to be careful not to share the colab. And one of the great things about colabs is that you can share them!
 """
 
-hf_token = userdata.get('HF_TOKEN')
-login(hf_token, add_to_git_credential=True)
+# Get HuggingFace token from environment variable
+hf_token = os.getenv('HF_TOKEN')
+if hf_token:
+    login(hf_token, add_to_git_credential=True)
+    print("Successfully logged in to HuggingFace Hub")
+else:
+    print("Warning: HF_TOKEN environment variable not set. Some models may require authentication.")
+    print("To set your token, run: export HF_TOKEN='your_token_here'")
+
+# Device detection
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"Using device: {device}")
+if device == "cpu":
+    print("Note: Running on CPU. For better performance, consider using a GPU-enabled environment.")
 
 # Sentiment Analysis
 
-classifier = pipeline("sentiment-analysis", device="cuda")
+classifier = pipeline("sentiment-analysis", device=device)
 result = classifier("I'm super excited to be on the way to LLM mastery!")
 print(result)
 
 # Named Entity Recognition
 
-ner = pipeline("ner", grouped_entities=True, device="cuda")
+ner = pipeline("ner", grouped_entities=True, device=device)
 result = ner("Barack Obama was the 44th president of the United States.")
 print(result)
 
 # Question Answering with Context
 
-question_answerer = pipeline("question-answering", device="cuda")
+question_answerer = pipeline("question-answering", device=device)
 result = question_answerer(question="Who was the 44th president of the United States?", context="Barack Obama was the 44th president of the United States.")
 print(result)
 
 # Text Summarization
 
-summarizer = pipeline("summarization", device="cuda")
+summarizer = pipeline("summarization", device=device)
 text = """The Hugging Face transformers library is an incredibly versatile and powerful tool for natural language processing (NLP).
 It allows users to perform a wide range of tasks such as text classification, named entity recognition, and question answering, among others.
 It's an extremely popular library that's widely used by the open-source data science community.
@@ -143,26 +147,26 @@ print(summary[0]['summary_text'])
 
 # Translation
 
-translator = pipeline("translation_en_to_fr", device="cuda")
+translator = pipeline("translation_en_to_fr", device=device)
 result = translator("The Data Scientists were truly amazed by the power and simplicity of the HuggingFace pipeline API.")
 print(result[0]['translation_text'])
 
 # Another translation, showing a model being specified
 # All translation models are here: https://huggingface.co/models?pipeline_tag=translation&sort=trending
 
-translator = pipeline("translation_en_to_es", model="Helsinki-NLP/opus-mt-en-es", device="cuda")
+translator = pipeline("translation_en_to_es", model="Helsinki-NLP/opus-mt-en-es", device=device)
 result = translator("The Data Scientists were truly amazed by the power and simplicity of the HuggingFace pipeline API.")
 print(result[0]['translation_text'])
 
 # Classification
 
-classifier = pipeline("zero-shot-classification", device="cuda")
+classifier = pipeline("zero-shot-classification", device=device)
 result = classifier("Hugging Face's Transformers library is amazing!", candidate_labels=["technology", "sports", "politics"])
 print(result)
 
 # Text Generation
 
-generator = pipeline("text-generation", device="cuda")
+generator = pipeline("text-generation", device=device)
 result = generator("If there's one thing I want you to remember about using HuggingFace pipelines, it's")
 print(result[0]['generated_text'])
 
@@ -170,18 +174,20 @@ print(result[0]['generated_text'])
 
 image_gen = DiffusionPipeline.from_pretrained(
     "stabilityai/stable-diffusion-2",
-    torch_dtype=torch.float16,
+    torch_dtype=torch.float16 if device == "cuda" else torch.float32,
     use_safetensors=True,
-    variant="fp16"
-    ).to("cuda")
+    variant="fp16" if device == "cuda" else None
+    ).to(device)
 
 text = "A class of Data Scientists learning about AI, in the surreal style of Salvador Dali"
 image = image_gen(prompt=text).images[0]
-image
+# Save the generated image
+image.save("generated_image.png")
+print(f"Generated image saved as 'generated_image.png'")
 
 # Audio Generation
 
-synthesiser = pipeline("text-to-speech", "microsoft/speecht5_tts", device='cuda')
+synthesiser = pipeline("text-to-speech", "microsoft/speecht5_tts", device=device)
 
 embeddings_dataset = load_dataset("Matthijs/cmu-arctic-xvectors", split="validation")
 speaker_embedding = torch.tensor(embeddings_dataset[7306]["xvector"]).unsqueeze(0)
@@ -189,7 +195,8 @@ speaker_embedding = torch.tensor(embeddings_dataset[7306]["xvector"]).unsqueeze(
 speech = synthesiser("Hi to an artificial intelligence engineer, on the way to mastery!", forward_params={"speaker_embeddings": speaker_embedding})
 
 sf.write("speech.wav", speech["audio"], samplerate=speech["sampling_rate"])
-Audio("speech.wav")
+print("Generated speech saved as 'speech.wav'")
+print("You can play this audio file using any audio player.")
 
 """# All the available pipelines
 
