@@ -2,11 +2,11 @@
 
 ML/AI projects from production-ready applications to experimental work.
 
-## Production Ready
+## Prototype
 
 | Project | Type | Description |
 |---------|------|-------------|
-| [01 - Resume Chatbot](./01_resume-chatbot-llm) | LLM | Resume Q&A using LangChain + GPT |
+| [01 - Resume Chatbot](./01_resume-chatbot-llm) | LLM | Prototype of Resume Q&A using GPT |
 | [02 - Image Classifier](./02_image-classifier-cnn) | CNN | Multi-dataset image classification |
 
 ## Work in Progress
