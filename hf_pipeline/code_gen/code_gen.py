@@ -28,6 +28,7 @@ import gradio as gr
 from dotenv import load_dotenv
 from openai import OpenAI
 import anthropic
+import google.generativeai as genai
 
 # Configure logging
 logging.basicConfig(
@@ -46,20 +47,56 @@ class CodeGenerator:
     and execution of both Python and C++ code.
     """
     
-    def __init__(self, openai_model: str = "gpt-4o", claude_model: str = "claude-3-5-sonnet-20240620"):
+    def __init__(self, openai_model: str = "gpt-4o", claude_model: str = "claude-3-5-sonnet-20240620", gemini_model: str = "gemini-1.5-flash"):
         """
         Initialize the CodeGenerator with AI models.
         
         Args:
             openai_model (str): OpenAI model to use for conversion
             claude_model (str): Claude model to use for conversion
+            gemini_model (str): Gemini model to use for conversion
         """
         self._load_environment()
         self.openai_client = OpenAI()
         self.claude_client = anthropic.Anthropic()
         self.openai_model = openai_model
         self.claude_model = claude_model
+        self.gemini_model = gemini_model
         self.system_message = self._get_system_message()
+        
+        # Initialize Gemini (optional - only if API key is available)
+        self.gemini_model = None
+        self.gemini_model_obj = None
+        
+        try:
+            google_api_key = os.getenv('GOOGLE_API_KEY')
+            if not google_api_key or google_api_key == 'your-key-if-not-using-env' or google_api_key == 'test-key':
+                logger.info("GOOGLE_API_KEY not set or invalid, Gemini model will not be available")
+            else:
+                genai.configure(api_key=google_api_key)
+                # Try different model names to find one that works
+                model_names_to_try = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro', 'models/gemini-1.5-flash']
+                
+                for model_name in model_names_to_try:
+                    try:
+                        test_model = genai.GenerativeModel(model_name)
+                        # Test with a simple request
+                        test_response = test_model.generate_content("Hello")
+                        if test_response and test_response.text:
+                            self.gemini_model = model_name
+                            self.gemini_model_obj = test_model
+                            logger.info(f"Gemini model '{model_name}' initialized successfully")
+                            break
+                    except Exception as model_error:
+                        logger.debug(f"Model '{model_name}' not available: {model_error}")
+                        continue
+                
+                if self.gemini_model is None:
+                    logger.warning("No working Gemini model found with the provided API key")
+                    
+        except Exception as e:
+            logger.info(f"Gemini model not available: {e}")
+            # Don't treat this as an error - Gemini is optional
         
     def _load_environment(self) -> None:
         """Load environment variables from .env file."""
@@ -67,6 +104,7 @@ class CodeGenerator:
             load_dotenv(override=True)
             os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY', 'your-key-if-not-using-env')
             os.environ['ANTHROPIC_API_KEY'] = os.getenv('ANTHROPIC_API_KEY', 'your-key-if-not-using-env')
+            os.environ['GOOGLE_API_KEY'] = os.getenv('GOOGLE_API_KEY', 'your-key-if-not-using-env')
             logger.info("Environment variables loaded successfully")
         except Exception as e:
             logger.error(f"Failed to load environment variables: {e}")
@@ -197,6 +235,41 @@ class CodeGenerator:
             logger.error(f"Claude conversion failed: {e}")
             raise
     
+    def convert_with_gemini(self, python_code: str) -> str:
+        """
+        Convert Python code to C++ using Gemini model.
+        
+        Args:
+            python_code (str): Python code to convert
+            
+        Returns:
+            str: Generated C++ code
+        """
+        try:
+            if self.gemini_model is None or self.gemini_model_obj is None:
+                return "❌ Gemini model not available. Please check your GOOGLE_API_KEY and ensure it's valid."
+            
+            logger.info("Starting Gemini conversion")
+            
+            # Create the full prompt for Gemini
+            full_prompt = f"{self.system_message}\n\n{self._get_user_prompt(python_code)}"
+            
+            # Generate content using Gemini
+            response = self.gemini_model_obj.generate_content(full_prompt)
+            
+            if response and response.text:
+                reply = response.text
+                print(reply, end='', flush=True)
+                self._write_cpp_file(reply)
+                logger.info("Gemini conversion completed")
+                return reply
+            else:
+                return "❌ No response from Gemini model"
+                
+        except Exception as e:
+            logger.error(f"Gemini conversion failed: {e}")
+            return f"❌ Error with Gemini conversion: {str(e)}"
+    
     def stream_gpt(self, python_code: str) -> Generator[str, None, None]:
         """
         Stream GPT conversion process.
@@ -252,13 +325,57 @@ class CodeGenerator:
             logger.error(f"Claude streaming failed: {e}")
             raise
     
+    def stream_gemini(self, python_code: str) -> Generator[str, None, None]:
+        """
+        Stream Gemini conversion process.
+        
+        Args:
+            python_code (str): Python code to convert
+            
+        Yields:
+            str: Partial C++ code as it's generated
+        """
+        try:
+            if self.gemini_model is None or self.gemini_model_obj is None:
+                yield "❌ Gemini model not available. Please check your GOOGLE_API_KEY and ensure it's valid."
+                return
+            
+            # Create the full prompt for Gemini
+            full_prompt = f"{self.system_message}\n\n{self._get_user_prompt(python_code)}"
+            
+            # Generate content using Gemini (note: Gemini doesn't support streaming like GPT/Claude)
+            response = self.gemini_model_obj.generate_content(full_prompt)
+            
+            if response and response.text:
+                # Simulate streaming by yielding chunks
+                reply = response.text
+                chunk_size = 50  # Yield in chunks of 50 characters
+                for i in range(0, len(reply), chunk_size):
+                    chunk = reply[i:i + chunk_size]
+                    yield reply[:i + chunk_size].replace('```cpp\n', '').replace('```', '')
+            else:
+                yield "❌ No response from Gemini model"
+                
+        except Exception as e:
+            logger.error(f"Gemini streaming failed: {e}")
+            yield f"❌ Error with Gemini streaming: {str(e)}"
+    
+    def is_gemini_available(self) -> bool:
+        """
+        Check if Gemini model is available.
+        
+        Returns:
+            bool: True if Gemini is available, False otherwise
+        """
+        return self.gemini_model is not None and self.gemini_model_obj is not None
+    
     def convert_code(self, python_code: str, model: str) -> Generator[str, None, None]:
         """
         Convert Python code to C++ using specified model.
         
         Args:
             python_code (str): Python code to convert
-            model (str): Model to use ("GPT" or "Claude")
+            model (str): Model to use ("GPT", "Claude", or "Gemini")
             
         Yields:
             str: Partial C++ code as it's generated
@@ -270,8 +387,10 @@ class CodeGenerator:
             yield from self.stream_gpt(python_code)
         elif model == "Claude":
             yield from self.stream_claude(python_code)
+        elif model == "Gemini":
+            yield from self.stream_gemini(python_code)
         else:
-            raise ValueError(f"Unknown model: {model}. Supported models: GPT, Claude")
+            raise ValueError(f"Unknown model: {model}. Supported models: GPT, Claude, Gemini")
     
     def execute_python(self, python_code: str) -> str:
         """
@@ -418,6 +537,15 @@ print("Execution Time: {:.6f} seconds".format(end_time - start_time))"""
             gr.Markdown("# Convert Python Code to High-Performance C++")
             gr.Markdown("Use AI models to convert Python code to optimized C++ code with performance improvements.")
             
+            # Show model availability status
+            model_status = "Available models: GPT, Claude"
+            if code_generator.is_gemini_available():
+                model_status += ", Gemini"
+            else:
+                model_status += " (Gemini not available - set GOOGLE_API_KEY to enable)"
+            
+            gr.Markdown(f"**{model_status}**")
+            
             with gr.Row():
                 python_input = gr.Textbox(
                     label="Python Code:", 
@@ -432,8 +560,13 @@ print("Execution Time: {:.6f} seconds".format(end_time - start_time))"""
                 )
             
             with gr.Row():
+                # Dynamically create model options based on availability
+                available_models = ["GPT", "Claude"]
+                if code_generator.is_gemini_available():
+                    available_models.append("Gemini")
+                
                 model_selector = gr.Dropdown(
-                    ["GPT", "Claude"], 
+                    available_models, 
                     label="Select AI Model", 
                     value="GPT"
                 )

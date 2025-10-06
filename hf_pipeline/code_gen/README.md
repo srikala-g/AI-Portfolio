@@ -1,10 +1,10 @@
 # Code Generator: Python to C++ Converter
 
-A powerful AI-powered tool that converts Python code to high-performance C++ code using state-of-the-art language models (GPT-4o and Claude-3.5-Sonnet).
+A powerful AI-powered tool that converts Python code to high-performance C++ code using state-of-the-art language models (GPT-4o, Claude-3.5-Sonnet, and Gemini-1.5-Flash).
 
 ## 🚀 Features
 
-- **AI-Powered Conversion**: Uses OpenAI GPT-4o and Anthropic Claude-3.5-Sonnet for code conversion
+- **AI-Powered Conversion**: Uses OpenAI GPT-4o, Anthropic Claude-3.5-Sonnet, and Google Gemini-1.5-Flash for code conversion
 - **Real-time Streaming**: Watch the conversion process in real-time
 - **Interactive Web Interface**: User-friendly Gradio interface
 - **Code Execution**: Execute both Python and C++ code directly in the interface
@@ -16,6 +16,7 @@ A powerful AI-powered tool that converts Python code to high-performance C++ cod
 - Python 3.8+
 - OpenAI API key
 - Anthropic API key
+- Google API key (for Gemini)
 - C++ compiler (clang++ recommended)
 
 ## 🛠️ Installation
@@ -36,7 +37,10 @@ A powerful AI-powered tool that converts Python code to high-performance C++ cod
    ```bash
    OPENAI_API_KEY=your_openai_api_key_here
    ANTHROPIC_API_KEY=your_anthropic_api_key_here
+   GOOGLE_API_KEY=your_google_api_key_here  # Optional - for Gemini model
    ```
+   
+   **Note**: The `GOOGLE_API_KEY` is optional. If not provided, the Gemini model will not be available, but GPT and Claude models will still work.
 
 ## 🚀 Usage
 

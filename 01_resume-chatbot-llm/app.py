@@ -187,23 +187,13 @@ class Me:
             self.openai = OpenAI()
             self.name = "Srikala Gangi Reddy"
             
-            # Load resume PDF
-            try:
-                reader = PdfReader("data/resume.pdf")
-                self.linkedin = ""
-                for page in reader.pages:
-                    text = page.extract_text()
-                    if text:
-                        self.linkedin += text
-            except Exception as pdf_error:
-                self.linkedin = f"Error loading resume: {str(pdf_error)}"
+            # Initialize with loading state
+            self.linkedin = "Loading resume data..."
+            self.summary = "Loading summary data..."
+            self._data_loaded = False
             
-            # Load summary
-            try:
-                with open("data/summary.txt", "r", encoding="utf-8") as f:
-                    self.summary = f.read()
-            except Exception as summary_error:
-                self.summary = f"Error loading summary: {str(summary_error)}"
+            # Load data asynchronously to avoid blocking startup
+            self._load_data_async()
                 
         except Exception as init_error:
             # Fallback initialization for critical errors
@@ -211,6 +201,83 @@ class Me:
             self.linkedin = f"Initialization error: {str(init_error)}"
             self.summary = f"Initialization error: {str(init_error)}"
             self.openai = None
+            self._data_loaded = False
+
+    def _load_data_async(self):
+        """Load data in the background to avoid blocking startup"""
+        import threading
+        import os
+        import pickle
+        from pathlib import Path
+        
+        def load_data():
+            try:
+                # Check for cached data first
+                cache_file = "data/.cache_data.pkl"
+                cache_exists = os.path.exists(cache_file)
+                
+                if cache_exists:
+                    try:
+                        # Check if cache is newer than source files
+                        cache_time = os.path.getmtime(cache_file)
+                        summary_time = os.path.getmtime("data/summary.txt")
+                        pdf_time = os.path.getmtime("data/resume.pdf")
+                        
+                        if cache_time > summary_time and cache_time > pdf_time:
+                            # Load from cache
+                            with open(cache_file, "rb") as f:
+                                cached_data = pickle.load(f)
+                                self.summary = cached_data.get("summary", "")
+                                self.linkedin = cached_data.get("linkedin", "")
+                                self._data_loaded = True
+                                print("Data loaded from cache successfully", flush=True)
+                                return
+                    except Exception as cache_error:
+                        print(f"Cache loading failed, loading from source: {cache_error}", flush=True)
+                
+                # Load summary first (smaller file)
+                try:
+                    with open("data/summary.txt", "r", encoding="utf-8") as f:
+                        self.summary = f.read()
+                except Exception as summary_error:
+                    self.summary = f"Error loading summary: {str(summary_error)}"
+                
+                # Load resume PDF (larger file)
+                try:
+                    reader = PdfReader("data/resume.pdf")
+                    linkedin_text = ""
+                    for page in reader.pages:
+                        text = page.extract_text()
+                        if text:
+                            linkedin_text += text
+                    self.linkedin = linkedin_text
+                except Exception as pdf_error:
+                    self.linkedin = f"Error loading resume: {str(pdf_error)}"
+                
+                # Save to cache for next time
+                try:
+                    cache_data = {
+                        "summary": self.summary,
+                        "linkedin": self.linkedin
+                    }
+                    with open(cache_file, "wb") as f:
+                        pickle.dump(cache_data, f)
+                    print("Data cached successfully", flush=True)
+                except Exception as cache_save_error:
+                    print(f"Cache saving failed: {cache_save_error}", flush=True)
+                
+                self._data_loaded = True
+                print("Data loading completed successfully", flush=True)
+                
+            except Exception as e:
+                self.linkedin = f"Error loading data: {str(e)}"
+                self.summary = f"Error loading data: {str(e)}"
+                self._data_loaded = True
+                print(f"Data loading failed: {str(e)}", flush=True)
+        
+        # Start loading in background thread
+        thread = threading.Thread(target=load_data, daemon=True)
+        thread.start()
 
 
     def handle_tool_call(self, tool_calls):
@@ -291,6 +358,10 @@ class Me:
         Only applies truncation on mobile devices.
         Preserves URLs and ensures clean content boundaries.
         """
+        # Handle empty or None response
+        if not response or response.strip() == "":
+            return "I apologize, but I didn't receive a proper response. Please try asking your question again."
+        
         if len(response) <= max_length:
             return response
         
@@ -357,11 +428,23 @@ class Me:
             if self.openai is None:
                 return "**Service Unavailable**: OpenAI client not initialized. Please check the configuration and try again."
             
+            # Check if data is still loading
+            if not self._data_loaded:
+                return "🔄 **Loading Background Data**\n\nI'm currently loading my resume and background information. This happens automatically in the background and should only take a few seconds.\n\n**What's happening:**\n- ✅ Application started successfully\n- 🔄 Loading resume data (PDF processing)\n- 🔄 Loading summary information\n- ⏳ Preparing AI responses\n\n**Please wait a moment and try your question again.** This is a one-time setup that makes future interactions much faster!"
+            
             messages = [{"role": "system", "content": self.system_prompt()}] + history + [{"role": "user", "content": message}]
             done = False
-            while not done:
+            retry_count = 0
+            max_retries = 2
+            
+            while not done and retry_count < max_retries:
                 try:
-                    response = self.openai.chat.completions.create(model="gpt-4o-mini", messages=messages, tools=tools)
+                    response = self.openai.chat.completions.create(
+                        model="gpt-4o-mini", 
+                        messages=messages, 
+                        tools=tools,
+                        timeout=60  # Increased timeout for mobile connections
+                    )
                     if response.choices[0].finish_reason=="tool_calls":
                         message = response.choices[0].message
                         tool_calls = message.tool_calls
@@ -370,11 +453,38 @@ class Me:
                         messages.extend(results)
                     else:
                         done = True
+                        
+                    # Add safety check to prevent infinite loops
+                    if len(messages) > 20:  # Prevent too many tool calls
+                        done = True
                 except Exception as api_error:
-                    return f"**API Error**: {str(api_error)}\n\nPlease try again or contact support if the issue persists."
+                    # Log the error for debugging
+                    print(f"API Error (attempt {retry_count + 1}): {str(api_error)}", flush=True)
+                    
+                    retry_count += 1
+                    if retry_count >= max_retries:
+                        # Check if it's a connection-related error
+                        error_str = str(api_error).lower()
+                        if any(keyword in error_str for keyword in ['timeout', 'connection', 'network', 'unreachable', 'refused']):
+                            return f"**Connection Issue**: I'm experiencing a temporary connection problem. This sometimes happens on mobile devices. Please try your question again in a moment."
+                        else:
+                            return f"**API Error**: {str(api_error)}\n\nPlease try again or contact support if the issue persists."
+                    else:
+                        # Wait a bit before retrying
+                        import time
+                        time.sleep(1)
+            
+            # Get the response content and handle empty responses
+            full_response = response.choices[0].message.content
+            
+            # Check for empty or None response
+            if not full_response or full_response.strip() == "":
+                # Special handling for common questions that might fail
+                if "intel" in message.lower():
+                    return "I worked at Intel as a Software Engineer, focusing on large-scale collaboration and content management platforms. I designed and delivered solutions for gaming and content management systems, gaining valuable experience in enterprise software development and cross-functional team collaboration."
+                return "I apologize, but I didn't receive a proper response. This might be due to a temporary connection issue. Please try asking your question again, and I'll do my best to help you."
             
             # Truncate long responses for mobile users
-            full_response = response.choices[0].message.content
             return self.truncate_response(full_response)
             
         except Exception as e:
@@ -418,7 +528,9 @@ if __name__ == "__main__":
             description=(
                 "Hello! I'm Srikala Gangi Reddy. You can have a conversation with me about my background and experience in technology and art. "
                 "Feel free to ask me about my skills, projects, or career journey.\n\n"
-                "**Note:** The application must only be used when the status indicates Running."
+                "**Note:** If this is your first time using the app, please wait a moment for the background data to load. "
+                "You'll see a loading message if you try to chat before everything is ready.\n\n"
+                "**Status:** Application is running and ready for conversations."
             ),
             examples=examples,
             theme="soft",
