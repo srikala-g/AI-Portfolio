@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../llm_engineering"
+		},
+		{
+			"path": "../agents"
+		}
+	],
+	"settings": {}
+}

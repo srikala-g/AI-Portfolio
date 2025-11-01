@@ -1,0 +1,30 @@
+# Core dependencies
+numpy>=1.21.0
+matplotlib>=3.5.0
+seaborn>=0.11.0
+opencv-python>=4.5.0
+Pillow>=8.3.0
+
+# TensorFlow ecosystem
+tensorflow>=2.8.0
+tensorflow-datasets>=4.5.0
+
+# PyTorch ecosystem
+torch>=1.11.0
+torchvision>=0.12.0
+torchsummary>=1.5.1
+
+# Scikit-learn
+scikit-learn>=1.0.0
+
+# Additional utilities (optional but recommended)
+pandas>=1.3.0
+tqdm>=4.62.0
+
+# Web interface
+gradio>=4.0.0
+
+# Optional: For better performance with GPU
+# Uncomment the following if you have CUDA-compatible GPU:
+# tensorflow-gpu>=2.8.0
+# For PyTorch GPU support, install from: https://pytorch.org/get-started/locally/
