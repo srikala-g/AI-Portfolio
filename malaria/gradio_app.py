@@ -50,31 +50,126 @@ def create_cnn_model(input_shape):
     return model
 
 
-def load_or_create_model(model_path=None):
-    """Load a pre-trained model or create a new one."""
+def create_resnet_model(input_shape):
+    """Create a ResNet-like model for malaria detection."""
+    inputs = tf.keras.Input(shape=input_shape)
+    
+    # Initial convolutional layers
+    x = layers.Conv2D(32, 3, activation='relu')(inputs)
+    x = layers.Conv2D(64, 3, activation='relu')(x)
+    block_1_output = layers.MaxPooling2D(3)(x)
+    
+    # Residual block 1
+    x = layers.Conv2D(64, 3, activation='relu', padding='same')(block_1_output)
+    x = layers.Conv2D(64, 3, activation='relu', padding='same')(x)
+    block_2_output = layers.add([x, block_1_output])
+    
+    # Residual block 2
+    x = layers.Conv2D(64, 3, activation='relu', padding='same')(block_2_output)
+    x = layers.Conv2D(64, 3, activation='relu', padding='same')(x)
+    block_3_output = layers.add([x, block_2_output])
+    
+    # Final layers
+    x = layers.Conv2D(64, 3, activation='relu')(block_3_output)
+    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.Dense(256, activation='relu')(x)
+    x = layers.Dropout(0.5)(x)
+    outputs = layers.Dense(1, activation='sigmoid')(x)
+    
+    model = tf.keras.Model(inputs, outputs)
+    return model
+
+
+def create_mobilenetv2_model(input_shape):
+    """Create a MobileNetV2 model for malaria detection using transfer learning."""
+    base_model = tf.keras.applications.MobileNetV2(
+        input_shape=input_shape,
+        include_top=False,
+        weights='imagenet'
+    )
+    base_model.trainable = False  # Freeze base model initially
+    
+    inputs = tf.keras.Input(shape=input_shape)
+    x = base_model(inputs, training=False)
+    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.Dense(128, activation='relu')(x)
+    x = layers.Dropout(0.2)(x)
+    outputs = layers.Dense(1, activation='sigmoid')(x)
+    
+    model = tf.keras.Model(inputs, outputs)
+    return model
+
+
+def load_or_create_model(model_path=None, model_type="CNN"):
+    """Load a pre-trained model or create a new one.
+    
+    Args:
+        model_path: Path to saved model file (optional)
+        model_type: Type of model to create ("CNN" or "ResNet")
+    """
     global MODEL, INPUT_SHAPE
     
-    model_info = {
-        'name': 'CNN Model',
-        'architecture': 'Sequential',
-        'layers': [
-            'Conv2D(32, 3x3) + ReLU',
-            'MaxPooling2D(2x2)',
-            'Conv2D(64, 3x3) + ReLU',
-            'MaxPooling2D(2x2)',
-            'Conv2D(64, 3x3) + ReLU',
-            'Flatten',
-            'Dense(64) + ReLU',
-            'Dense(1) + Sigmoid'
-        ],
-        'input_shape': INPUT_SHAPE,
-        'trained': False
-    }
+    # Default model info structure
+    if model_type == "ResNet":
+        model_info = {
+            'name': 'ResNet Model',
+            'architecture': 'ResNet-like with Residual Blocks',
+            'layers': [
+                'Conv2D(32, 3x3) + ReLU',
+                'Conv2D(64, 3x3) + ReLU',
+                'MaxPooling2D(3x3)',
+                'Residual Block 1 (skip connections)',
+                'Residual Block 2 (skip connections)',
+                'GlobalAveragePooling2D',
+                'Dense(256) + ReLU + Dropout(0.5)',
+                'Dense(1) + Sigmoid'
+            ],
+            'input_shape': INPUT_SHAPE,
+            'trained': False
+        }
+    elif model_type == "MobileNetV2":
+        model_info = {
+            'name': 'MobileNetV2 Model',
+            'architecture': 'Transfer Learning (MobileNetV2)',
+            'layers': [
+                'MobileNetV2 Base (ImageNet weights, frozen)',
+                'GlobalAveragePooling2D',
+                'Dense(128) + ReLU',
+                'Dropout(0.2)',
+                'Dense(1) + Sigmoid'
+            ],
+            'input_shape': INPUT_SHAPE,
+            'trained': False
+        }
+    else:  # CNN
+        model_info = {
+            'name': 'CNN Model',
+            'architecture': 'Sequential',
+            'layers': [
+                'Conv2D(32, 3x3) + ReLU',
+                'MaxPooling2D(2x2)',
+                'Conv2D(64, 3x3) + ReLU',
+                'MaxPooling2D(2x2)',
+                'Conv2D(64, 3x3) + ReLU',
+                'Flatten',
+                'Dense(64) + ReLU',
+                'Dense(1) + Sigmoid'
+            ],
+            'input_shape': INPUT_SHAPE,
+            'trained': False
+        }
     
     if model_path and os.path.exists(model_path):
         try:
             MODEL = tf.keras.models.load_model(model_path)
             INPUT_SHAPE = MODEL.input_shape[1:]  # Get input shape from model
+            # Try to detect model type from loaded model
+            if 'resnet' in model_path.lower() or 'residual' in str(MODEL.summary()).lower():
+                model_info['name'] = 'ResNet Model'
+                model_info['architecture'] = 'ResNet-like with Residual Blocks'
+            elif 'mobilenet' in model_path.lower():
+                model_info['name'] = 'MobileNetV2 Model'
+                model_info['architecture'] = 'Transfer Learning (MobileNetV2)'
             model_info['trained'] = True
             model_info['saved_path'] = model_path
             model_info['source'] = f'Loaded from {model_path}'
@@ -83,8 +178,13 @@ def load_or_create_model(model_path=None):
         except Exception as e:
             print(f"Error loading model: {e}. Creating new model...")
     
-    # Create a new model
-    MODEL = create_cnn_model(INPUT_SHAPE)
+    # Create a new model based on type
+    if model_type == "ResNet":
+        MODEL = create_resnet_model(INPUT_SHAPE)
+    elif model_type == "MobileNetV2":
+        MODEL = create_mobilenetv2_model(INPUT_SHAPE)
+    else:  # CNN
+        MODEL = create_cnn_model(INPUT_SHAPE)
     
     # Compile the model
     MODEL.compile(
@@ -93,8 +193,8 @@ def load_or_create_model(model_path=None):
         metrics=['accuracy']
     )
     
-    model_info['source'] = 'Created new model (untrained)'
-    print("New model created (not trained - for demonstration)")
+    model_info['source'] = f'Created new {model_type} model (untrained)'
+    print(f"New {model_type} model created (not trained - for demonstration)")
     return MODEL, model_info
 
 
@@ -373,14 +473,24 @@ def augment_val_test_images_func(sample, img_size=(64, 64)):
     image = tf.image.per_image_standardization(image)
     return image, label
 
-def train_model(data_path, epochs, batch_size, train_ratio, val_ratio):
-    """Train the malaria detection model."""
+def train_model(data_path, epochs, batch_size, train_ratio, val_ratio, model_type="CNN"):
+    """Train the malaria detection model.
+    
+    Args:
+        data_path: Path to training data
+        epochs: Number of training epochs
+        batch_size: Batch size for training
+        train_ratio: Ratio of data for training
+        val_ratio: Ratio of data for validation
+        model_type: Type of model ("CNN" or "ResNet")
+    """
     global MODEL, MODEL_INFO
     
     steps_log = []
     
     try:
         steps_log.append("🔵 Step 1/8: Initializing training...")
+        steps_log.append(f"   • Model type: {model_type}")
         steps_log.append(f"   • Epochs: {epochs}")
         steps_log.append(f"   • Batch size: {batch_size}")
         steps_log.append(f"   • Train ratio: {train_ratio}")
@@ -470,8 +580,20 @@ def train_model(data_path, epochs, batch_size, train_ratio, val_ratio):
             input_shape = image_batch[0].shape
             break
         
-        # Create or reset model
-        MODEL = create_cnn_model(input_shape)
+        # Create or reset model based on type
+        if model_type == "ResNet":
+            MODEL = create_resnet_model(input_shape)
+            model_name = 'ResNet Model'
+            model_architecture = 'ResNet-like with Residual Blocks'
+        elif model_type == "MobileNetV2":
+            MODEL = create_mobilenetv2_model(input_shape)
+            model_name = 'MobileNetV2 Model'
+            model_architecture = 'Transfer Learning (MobileNetV2)'
+        else:  # CNN
+            MODEL = create_cnn_model(input_shape)
+            model_name = 'CNN Model'
+            model_architecture = 'Sequential'
+        
         MODEL.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
             loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
@@ -479,11 +601,11 @@ def train_model(data_path, epochs, batch_size, train_ratio, val_ratio):
         )
         
         MODEL_INFO = {
-            'name': 'CNN Model',
-            'architecture': 'Sequential',
+            'name': model_name,
+            'architecture': model_architecture,
             'input_shape': input_shape,
             'trained': True,
-            'source': 'Trained via Gradio interface'
+            'source': f'Trained via Gradio interface ({model_type})'
         }
         
         steps_log.append(f"   ✓ Model created with input shape: {input_shape}")
@@ -521,7 +643,10 @@ def train_model(data_path, epochs, batch_size, train_ratio, val_ratio):
         
         # Save model
         steps_log.append("\n💾 Step 7/8: Saving model...")
-        model_path = "malaria_model_trained.h5"
+        if model_type == "MobileNetV2":
+            model_path = "malaria_model_mobilenetv2_trained.h5"
+        else:
+            model_path = f"malaria_model_{model_type.lower()}_trained.h5"
         MODEL.save(model_path)
         steps_log.append(f"   ✓ Model saved to: {model_path}")
         
@@ -560,13 +685,26 @@ def create_interface():
     # Load or create model (check for saved trained model first)
     global MODEL, MODEL_INFO
     
-    # Check if a trained model exists
-    saved_model_path = "malaria_model_trained.h5"
-    if os.path.exists(saved_model_path):
-        print(f"Found saved model at {saved_model_path}, loading...")
-        MODEL, MODEL_INFO = load_or_create_model(saved_model_path)
+    # Check if a trained model exists (prefer CNN, then ResNet, then MobileNetV2)
+    saved_model_path_cnn = "malaria_model_cnn_trained.h5"
+    saved_model_path_resnet = "malaria_model_resnet_trained.h5"
+    saved_model_path_mobilenet = "malaria_model_mobilenetv2_trained.h5"
+    saved_model_path_legacy = "malaria_model_trained.h5"  # Legacy path
+    
+    if os.path.exists(saved_model_path_cnn):
+        print(f"Found saved CNN model at {saved_model_path_cnn}, loading...")
+        MODEL, MODEL_INFO = load_or_create_model(saved_model_path_cnn, "CNN")
+    elif os.path.exists(saved_model_path_resnet):
+        print(f"Found saved ResNet model at {saved_model_path_resnet}, loading...")
+        MODEL, MODEL_INFO = load_or_create_model(saved_model_path_resnet, "ResNet")
+    elif os.path.exists(saved_model_path_mobilenet):
+        print(f"Found saved MobileNetV2 model at {saved_model_path_mobilenet}, loading...")
+        MODEL, MODEL_INFO = load_or_create_model(saved_model_path_mobilenet, "MobileNetV2")
+    elif os.path.exists(saved_model_path_legacy):
+        print(f"Found legacy saved model at {saved_model_path_legacy}, loading...")
+        MODEL, MODEL_INFO = load_or_create_model(saved_model_path_legacy, "CNN")
     else:
-        MODEL, MODEL_INFO = load_or_create_model()
+        MODEL, MODEL_INFO = load_or_create_model(None, "CNN")
     
     print(f"Model initialized: {MODEL_INFO['name']}, Trained: {MODEL_INFO['trained']}")
     
@@ -610,6 +748,7 @@ def create_interface():
                 
                 with gr.Row():
                     with gr.Column(scale=1):
+                        gr.Markdown("### Training Configuration")
                         data_path_input = gr.Textbox(
                             label="Dataset Path",
                             value="cell_images/",
@@ -617,6 +756,14 @@ def create_interface():
                             lines=1
                         )
                         
+                        model_type_train = gr.Dropdown(
+                            choices=["CNN", "ResNet", "MobileNetV2"],
+                            value="CNN",
+                            label="Model Architecture",
+                            info="Select the model architecture for training: CNN (Simple), ResNet (with Residual Blocks), or MobileNetV2 (Transfer Learning)"
+                        )
+                        
+                        gr.Markdown("### Training Parameters")
                         with gr.Row():
                             epochs_input = gr.Slider(
                                 minimum=1,
@@ -722,6 +869,15 @@ def create_interface():
                 
                 with gr.Row():
                     with gr.Column(scale=1):
+                        # Set initial dropdown value based on loaded model
+                        initial_model_type = "ResNet" if "ResNet" in MODEL_INFO.get('name', '') else ("MobileNetV2" if "MobileNetV2" in MODEL_INFO.get('name', '') else "CNN")
+                        model_type_test = gr.Dropdown(
+                            choices=["CNN", "ResNet", "MobileNetV2"],
+                            value=initial_model_type,
+                            label="Model Architecture",
+                            info="Select the model architecture for prediction"
+                        )
+                        
                         image_input = gr.Image(
                             type="pil",
                             label="Upload Cell Image",
@@ -807,10 +963,49 @@ def create_interface():
             </div>
             """
         
+        def switch_model_for_testing(model_type):
+            """Switch to the selected model type for testing."""
+            global MODEL, MODEL_INFO
+            try:
+                # Check for saved model of this type first
+                if model_type == "MobileNetV2":
+                    saved_model_path = "malaria_model_mobilenetv2_trained.h5"
+                else:
+                    saved_model_path = f"malaria_model_{model_type.lower()}_trained.h5"
+                if os.path.exists(saved_model_path):
+                    print(f"Loading saved {model_type} model from {saved_model_path}")
+                    MODEL, MODEL_INFO = load_or_create_model(saved_model_path, model_type)
+                else:
+                    print(f"Creating new {model_type} model for testing")
+                    MODEL, MODEL_INFO = load_or_create_model(None, model_type)
+                
+                # Warm up the model
+                try:
+                    dummy_input = tf.zeros((1, 64, 64, 3))
+                    _ = MODEL(dummy_input, training=False)
+                    print(f"✓ {model_type} model warmed up")
+                except Exception as e:
+                    print(f"⚠ Warning: Could not warm up model: {e}")
+                
+                # Update model info display
+                saved_info = ""
+                if MODEL_INFO.get('saved_path'):
+                    if os.path.exists(MODEL_INFO['saved_path']):
+                        saved_info = f" | Saved as: {MODEL_INFO['saved_path']}"
+                    else:
+                        saved_info = f" | Saved as: {MODEL_INFO['saved_path']} (not found)"
+                
+                return f"Model: {MODEL_INFO['name']} | Architecture: {MODEL_INFO['architecture']} | Status: {'Trained' if MODEL_INFO['trained'] else 'Untrained (Demo)'}{saved_info}"
+            except Exception as e:
+                print(f"Error switching model: {e}")
+                import traceback
+                print(traceback.format_exc())
+                return f"Error switching to {model_type} model: {str(e)}"
+        
         # Set up training
         train_btn.click(
             fn=train_model,
-            inputs=[data_path_input, epochs_input, batch_size_input, train_ratio_input, val_ratio_input],
+            inputs=[data_path_input, epochs_input, batch_size_input, train_ratio_input, val_ratio_input, model_type_train],
             outputs=[train_status, train_acc_display, val_acc_display]
         ).then(
             fn=update_model_info_after_training,
@@ -860,6 +1055,16 @@ def create_interface():
                 error_html = f"<div style='color: red; padding: 20px;'>Error: {str(e)}</div>"
                 error_status = f"Error occurred: {str(e)}\n\n{error_details}"
                 return (error_html, error_status, None, f"Error: {str(e)}")
+        
+        # Connect model type dropdown to switch models
+        model_type_test.change(
+            fn=switch_model_for_testing,
+            inputs=model_type_test,
+            outputs=[test_model_info_text]
+        ).then(
+            fn=update_model_name_display,
+            outputs=[model_name_display]
+        )
         
         predict_btn.click(
             fn=predict_with_progress,
