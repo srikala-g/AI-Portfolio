@@ -1,0 +1,9 @@
+# Python dependencies for Portfolio project
+# This is a React/JavaScript frontend project
+# Add Python backend dependencies here if needed in the future
+
+# Example: If you add a Python backend API
+# flask>=2.3.0
+# fastapi>=0.100.0
+# python-dotenv>=1.0.0
+
