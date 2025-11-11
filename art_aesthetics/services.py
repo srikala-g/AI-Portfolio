@@ -137,12 +137,40 @@ class OpenCVColorExtractor(ColorExtractor):
             # Reshape image to be a list of pixels
             pixels = image.reshape(-1, 3)
             
+            # Validate pixel data
+            if len(pixels) == 0:
+                raise ValueError("Image contains no pixels")
+            
+            # Remove any invalid pixels (NaN, Inf, or out of range values)
+            valid_mask = np.isfinite(pixels).all(axis=1) & (pixels >= 0).all(axis=1) & (pixels <= 255).all(axis=1)
+            pixels = pixels[valid_mask]
+            
+            if len(pixels) == 0:
+                raise ValueError("No valid pixels found in image")
+            
+            # Ensure we have enough pixels for clustering
+            if len(pixels) < num_colors:
+                num_colors = max(1, len(pixels))
+                logger.warning(f"Reducing number of colors to {num_colors} due to insufficient pixels")
+            
+            # Sample pixels if there are too many (for performance and to avoid overflow)
+            max_pixels = 50000
+            if len(pixels) > max_pixels:
+                indices = np.random.choice(len(pixels), max_pixels, replace=False)
+                pixels = pixels[indices]
+            
+            # Ensure pixels are float32 to avoid overflow issues
+            pixels = pixels.astype(np.float32)
+            
             # Apply K-means clustering
-            kmeans = KMeans(n_clusters=num_colors, random_state=42, n_init=10)
+            kmeans = KMeans(n_clusters=num_colors, random_state=42, n_init=10, max_iter=300)
             kmeans.fit(pixels)
             
             # Get cluster centers (dominant colors)
             colors = kmeans.cluster_centers_
+            
+            # Validate cluster centers
+            colors = np.clip(colors, 0, 255)
             
             # Sort by frequency (approximate)
             labels = kmeans.labels_
@@ -153,7 +181,11 @@ class OpenCVColorExtractor(ColorExtractor):
             color_list = []
             for idx in sorted_indices:
                 r, g, b = colors[idx].astype(int)
-                color_list.append(Color(r=int(r), g=int(g), b=int(b)))
+                # Ensure values are in valid range
+                r = max(0, min(255, int(r)))
+                g = max(0, min(255, int(g)))
+                b = max(0, min(255, int(b)))
+                color_list.append(Color(r=r, g=g, b=b))
             
             return color_list
             

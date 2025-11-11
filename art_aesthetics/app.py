@@ -176,7 +176,7 @@ def main():
         if uploaded_file is not None:
             # Display uploaded image
             image = Image.open(uploaded_file)
-            st.image(image, caption="Uploaded Image", use_container_width=True)
+            st.image(image, caption="Uploaded Image", width='stretch')
             
             # Save uploaded file temporarily
             import tempfile
@@ -202,153 +202,153 @@ def main():
                         logger.error(f"Error: {e}", exc_info=True)
                         if os.path.exists(tmp_path):
                             os.unlink(tmp_path)
-    
-    elif mode == "Artist Style":
-        st.header("🎭 Generate from Artist Style")
         
-        col1, col2 = st.columns(2)
-        with col1:
-            artist_style = st.selectbox(
-                "Select Artist Style",
-                options=[style.value for style in ArtistStyle],
-                format_func=lambda x: x.replace("_", " ").title()
-            )
-        
-        with col2:
-            emotion = st.selectbox(
-                "Optional: Emotion/Theming",
-                options=["None"] + [e.value for e in Emotion],
-                format_func=lambda x: x.replace("_", " ").title() if x != "None" else x
-            )
-        
-        if st.button("Generate Palette", type="primary"):
-            with st.spinner("Generating palette..."):
-                try:
-                    style = ArtistStyle(artist_style)
-                    emo = Emotion(emotion) if emotion != "None" else None
-                    palette = st.session_state.manager.generate_from_artist_style(
-                        artist_style=style,
-                        emotion=emo,
-                        num_colors=num_colors
-                    )
-                    st.session_state.current_palette = palette
-                    st.success("Palette generated successfully!")
-                except Exception as e:
-                    st.error(f"Error generating palette: {e}")
-                    logger.error(f"Error: {e}", exc_info=True)
-    
-    elif mode == "Emotion-Based":
-        st.header("💭 Generate from Emotion")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            emotion = st.selectbox(
-                "Select Emotion/Theme",
-                options=[e.value for e in Emotion],
-                format_func=lambda x: x.replace("_", " ").title()
-            )
-        
-        with col2:
-            st.subheader("Optional: Base Color")
-            base_color_hex = st.color_picker("Choose a base color", value="#6496C8")
-            base_color = Color.from_hex(base_color_hex)
-        
-        if st.button("Generate Palette", type="primary"):
-            with st.spinner("Generating palette..."):
-                try:
-                    emo = Emotion(emotion)
-                    palette = st.session_state.manager.generate_from_emotion(
-                        emotion=emo,
-                        base_color=base_color,
-                        num_colors=num_colors
-                    )
-                    st.session_state.current_palette = palette
-                    st.success("Palette generated successfully!")
-                except Exception as e:
-                    st.error(f"Error generating palette: {e}")
-                    logger.error(f"Error: {e}", exc_info=True)
-    
-    elif mode == "Color Harmony":
-        st.header("🌈 Generate Color Harmony")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            base_color_hex = st.color_picker("Choose Base Color", value="#6496C8")
-            base_color = Color.from_hex(base_color_hex)
-        
-        with col2:
-            harmony_type = st.selectbox(
-                "Harmony Type",
-                options=[ht.value for ht in ColorHarmonyType],
-                format_func=lambda x: x.replace("_", " ").title()
-            )
-        
-        if st.button("Generate Palette", type="primary"):
-            with st.spinner("Generating palette..."):
-                try:
-                    harmony = ColorHarmonyType(harmony_type)
-                    palette = st.session_state.manager.generate_harmony_palette(
-                        base_color=base_color,
-                        harmony_type=harmony,
-                        num_colors=num_colors
-                    )
-                    st.session_state.current_palette = palette
-                    st.success("Palette generated successfully!")
-                except Exception as e:
-                    st.error(f"Error generating palette: {e}")
-                    logger.error(f"Error: {e}", exc_info=True)
-    
-    elif mode == "Custom":
-        st.header("🎯 Custom Palette Generation")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            base_color_hex = st.color_picker("Base Color (Optional)", value="#6496C8")
-            base_color = Color.from_hex(base_color_hex) if base_color_hex else None
+        elif mode == "Artist Style":
+            st.header("🎭 Generate from Artist Style")
             
-            artist_style = st.selectbox(
-                "Artist Style (Optional)",
-                options=["None"] + [s.value for s in ArtistStyle],
-                format_func=lambda x: x.replace("_", " ").title() if x != "None" else x
-            )
-        
-        with col2:
-            emotion = st.selectbox(
-                "Emotion (Optional)",
-                options=["None"] + [e.value for e in Emotion],
-                format_func=lambda x: x.replace("_", " ").title() if x != "None" else x
-            )
+            col1, col2 = st.columns(2)
+            with col1:
+                artist_style = st.selectbox(
+                    "Select Artist Style",
+                    options=[style.value for style in ArtistStyle],
+                    format_func=lambda x: x.replace("_", " ").title()
+                )
             
-            harmony_type = st.selectbox(
-                "Harmony Type (Optional)",
-                options=["None"] + [ht.value for ht in ColorHarmonyType],
-                format_func=lambda x: x.replace("_", " ").title() if x != "None" else x
-            )
+            with col2:
+                emotion = st.selectbox(
+                    "Optional: Emotion/Theming",
+                    options=["None"] + [e.value for e in Emotion],
+                    format_func=lambda x: x.replace("_", " ").title() if x != "None" else x
+                )
+            
+            if st.button("Generate Palette", type="primary"):
+                with st.spinner("Generating palette..."):
+                    try:
+                        style = ArtistStyle(artist_style)
+                        emo = Emotion(emotion) if emotion != "None" else None
+                        palette = st.session_state.manager.generate_from_artist_style(
+                            artist_style=style,
+                            emotion=emo,
+                            num_colors=num_colors
+                        )
+                        st.session_state.current_palette = palette
+                        st.success("Palette generated successfully!")
+                    except Exception as e:
+                        st.error(f"Error generating palette: {e}")
+                        logger.error(f"Error: {e}", exc_info=True)
         
-        if st.button("Generate Custom Palette", type="primary"):
-            with st.spinner("Generating custom palette..."):
-                try:
-                    style = ArtistStyle(artist_style) if artist_style != "None" else None
-                    emo = Emotion(emotion) if emotion != "None" else None
-                    harmony = ColorHarmonyType(harmony_type) if harmony_type != "None" else None
-                    
-                    palette = st.session_state.manager.generate_custom_palette(
-                        base_color=base_color,
-                        artist_style=style,
-                        emotion=emo,
-                        harmony_type=harmony,
-                        num_colors=num_colors
-                    )
-                    st.session_state.current_palette = palette
-                    st.success("Custom palette generated successfully!")
-                except Exception as e:
-                    st.error(f"Error generating palette: {e}")
-                    logger.error(f"Error: {e}", exc_info=True)
-    
-    # Display current palette
-    if st.session_state.current_palette:
-        st.markdown("---")
-        display_palette(st.session_state.current_palette)
+        elif mode == "Emotion-Based":
+            st.header("💭 Generate from Emotion")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                emotion = st.selectbox(
+                    "Select Emotion/Theme",
+                    options=[e.value for e in Emotion],
+                    format_func=lambda x: x.replace("_", " ").title()
+                )
+            
+            with col2:
+                st.subheader("Optional: Base Color")
+                base_color_hex = st.color_picker("Choose a base color", value="#6496C8")
+                base_color = Color.from_hex(base_color_hex)
+            
+            if st.button("Generate Palette", type="primary"):
+                with st.spinner("Generating palette..."):
+                    try:
+                        emo = Emotion(emotion)
+                        palette = st.session_state.manager.generate_from_emotion(
+                            emotion=emo,
+                            base_color=base_color,
+                            num_colors=num_colors
+                        )
+                        st.session_state.current_palette = palette
+                        st.success("Palette generated successfully!")
+                    except Exception as e:
+                        st.error(f"Error generating palette: {e}")
+                        logger.error(f"Error: {e}", exc_info=True)
+        
+        elif mode == "Color Harmony":
+            st.header("🌈 Generate Color Harmony")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                base_color_hex = st.color_picker("Choose Base Color", value="#6496C8")
+                base_color = Color.from_hex(base_color_hex)
+            
+            with col2:
+                harmony_type = st.selectbox(
+                    "Harmony Type",
+                    options=[ht.value for ht in ColorHarmonyType],
+                    format_func=lambda x: x.replace("_", " ").title()
+                )
+            
+            if st.button("Generate Palette", type="primary"):
+                with st.spinner("Generating palette..."):
+                    try:
+                        harmony = ColorHarmonyType(harmony_type)
+                        palette = st.session_state.manager.generate_harmony_palette(
+                            base_color=base_color,
+                            harmony_type=harmony,
+                            num_colors=num_colors
+                        )
+                        st.session_state.current_palette = palette
+                        st.success("Palette generated successfully!")
+                    except Exception as e:
+                        st.error(f"Error generating palette: {e}")
+                        logger.error(f"Error: {e}", exc_info=True)
+        
+        elif mode == "Custom":
+            st.header("🎯 Custom Palette Generation")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                base_color_hex = st.color_picker("Base Color (Optional)", value="#6496C8")
+                base_color = Color.from_hex(base_color_hex) if base_color_hex else None
+                
+                artist_style = st.selectbox(
+                    "Artist Style (Optional)",
+                    options=["None"] + [s.value for s in ArtistStyle],
+                    format_func=lambda x: x.replace("_", " ").title() if x != "None" else x
+                )
+            
+            with col2:
+                emotion = st.selectbox(
+                    "Emotion (Optional)",
+                    options=["None"] + [e.value for e in Emotion],
+                    format_func=lambda x: x.replace("_", " ").title() if x != "None" else x
+                )
+                
+                harmony_type = st.selectbox(
+                    "Harmony Type (Optional)",
+                    options=["None"] + [ht.value for ht in ColorHarmonyType],
+                    format_func=lambda x: x.replace("_", " ").title() if x != "None" else x
+                )
+            
+            if st.button("Generate Custom Palette", type="primary"):
+                with st.spinner("Generating custom palette..."):
+                    try:
+                        style = ArtistStyle(artist_style) if artist_style != "None" else None
+                        emo = Emotion(emotion) if emotion != "None" else None
+                        harmony = ColorHarmonyType(harmony_type) if harmony_type != "None" else None
+                        
+                        palette = st.session_state.manager.generate_custom_palette(
+                            base_color=base_color,
+                            artist_style=style,
+                            emotion=emo,
+                            harmony_type=harmony,
+                            num_colors=num_colors
+                        )
+                        st.session_state.current_palette = palette
+                        st.success("Custom palette generated successfully!")
+                    except Exception as e:
+                        st.error(f"Error generating palette: {e}")
+                        logger.error(f"Error: {e}", exc_info=True)
+        
+        # Display current palette
+        if st.session_state.current_palette:
+            st.markdown("---")
+            display_palette(st.session_state.current_palette)
     
     # Footer
     st.markdown("---")

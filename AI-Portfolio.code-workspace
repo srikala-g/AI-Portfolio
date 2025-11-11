@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../agents"
+		},
+		{
+			"path": "../production"
 		}
 	],
 	"settings": {}
