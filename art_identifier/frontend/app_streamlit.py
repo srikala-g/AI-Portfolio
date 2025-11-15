@@ -393,6 +393,28 @@ def search_by_image_and_text(image_file, query: str, top_k: int = 5):
         return []
 
 
+def get_artwork_backstory(artwork_id: str):
+    """Fetch backstory for an artwork from the API."""
+    try:
+        response = requests.get(
+            f"{api_url}/artwork/{artwork_id}/backstory",
+            timeout=60
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 503:
+            st.error("Backstory generation is not available. Please set OPENAI_API_KEY in the backend.")
+        elif e.response.status_code == 404:
+            st.error(f"Artwork with ID {artwork_id} not found.")
+        else:
+            st.error(f"Error fetching backstory: {e.response.text}")
+        return None
+    except Exception as e:
+        st.error(f"Error fetching backstory: {str(e)}")
+        return None
+
+
 # -----------------------------
 # Session state & routing setup
 # -----------------------------
@@ -416,6 +438,9 @@ if "last_search_feedback" not in st.session_state:
 
 if "color_palettes" not in st.session_state:
     st.session_state["color_palettes"] = {}  # Store palettes by search_id and idx
+
+if "artwork_backstories" not in st.session_state:
+    st.session_state["artwork_backstories"] = {}  # Store backstories by artwork_id
 
 if "active_tab_target" not in st.session_state:
     st.session_state["active_tab_target"] = None
@@ -649,46 +674,85 @@ with details_tab:
 
         display_artwork(selected_result)
 
-        # Extract Palette section
+        st.markdown("---")
+        
+        # Prepare keys for backstory and palette
+        artwork_id = selected_result.get("id")
+        backstory_key = artwork_id if artwork_id else f"none_{selected_idx}"
         current_search_id = st.session_state.get("current_search_id")
         palette_key = f"{current_search_id}_{selected_idx}" if current_search_id else f"none_{selected_idx}"
         
-        # Check if palette exists
+        # Check if backstory and palette exist
+        backstory_data = st.session_state["artwork_backstories"].get(backstory_key)
         palette = st.session_state["color_palettes"].get(palette_key)
         
-        # Button to extract palette - only show if not already extracted
-        if not palette:
-            if st.button("Extract Palette", key=f"extract_palette_{palette_key}", type="primary"):
-                image_url = resolve_image_url(selected_result.get('image_url') or selected_result.get('image_path'))
-                if image_url:
-                    with st.spinner("Extracting color palette..."):
-                        palette = extract_color_palette(image_url)
-                        if palette:
-                            st.session_state["color_palettes"][palette_key] = palette
-                            st.session_state["active_tab_target"] = "details"
-                            st.rerun()
-                        else:
-                            st.error("Error extracting palette")
-                else:
-                    st.warning("Image URL not available for palette extraction.")
-        else:
-            # Show button to re-extract if palette already exists
-            if st.button("Re-extract Palette", key=f"re_extract_palette_{palette_key}"):
-                image_url = resolve_image_url(selected_result.get('image_url') or selected_result.get('image_path'))
-                if image_url:
-                    with st.spinner("Extracting color palette..."):
-                        new_palette = extract_color_palette(image_url)
-                        if new_palette:
-                            st.session_state["color_palettes"][palette_key] = new_palette
-                            st.session_state["active_tab_target"] = "details"
-                            st.rerun()
-                        else:
-                            st.error("Error extracting palette")
-                else:
-                    st.warning("Image URL not available for palette extraction.")
+        # Place both buttons side by side
+        col1, col2 = st.columns(2)
         
-        # Get and display palette if available
-        palette = st.session_state["color_palettes"].get(palette_key)
+        with col1:
+            # Backstory button
+            if not backstory_data:
+                if st.button("Generate Backstory", key=f"generate_backstory_{backstory_key}", type="primary", use_container_width=True):
+                    if artwork_id:
+                        with st.spinner("Generating backstory using AI..."):
+                            backstory_result = get_artwork_backstory(artwork_id)
+                            if backstory_result:
+                                st.session_state["artwork_backstories"][backstory_key] = backstory_result
+                                st.session_state["active_tab_target"] = "details"
+                                st.rerun()
+                    else:
+                        st.warning("Artwork ID not available for backstory generation.")
+            else:
+                if st.button("Regenerate Backstory", key=f"regenerate_backstory_{backstory_key}", use_container_width=True):
+                    if artwork_id:
+                        with st.spinner("Regenerating backstory using AI..."):
+                            backstory_result = get_artwork_backstory(artwork_id)
+                            if backstory_result:
+                                st.session_state["artwork_backstories"][backstory_key] = backstory_result
+                                st.session_state["active_tab_target"] = "details"
+                                st.rerun()
+                    else:
+                        st.warning("Artwork ID not available for backstory generation.")
+        
+        with col2:
+            # Palette button
+            if not palette:
+                if st.button("Extract Palette", key=f"extract_palette_{palette_key}", type="primary", use_container_width=True):
+                    image_url = resolve_image_url(selected_result.get('image_url') or selected_result.get('image_path'))
+                    if image_url:
+                        with st.spinner("Extracting color palette..."):
+                            palette = extract_color_palette(image_url)
+                            if palette:
+                                st.session_state["color_palettes"][palette_key] = palette
+                                st.session_state["active_tab_target"] = "details"
+                                st.rerun()
+                            else:
+                                st.error("Error extracting palette")
+                    else:
+                        st.warning("Image URL not available for palette extraction.")
+            else:
+                if st.button("Re-extract Palette", key=f"re_extract_palette_{palette_key}", use_container_width=True):
+                    image_url = resolve_image_url(selected_result.get('image_url') or selected_result.get('image_path'))
+                    if image_url:
+                        with st.spinner("Extracting color palette..."):
+                            new_palette = extract_color_palette(image_url)
+                            if new_palette:
+                                st.session_state["color_palettes"][palette_key] = new_palette
+                                st.session_state["active_tab_target"] = "details"
+                                st.rerun()
+                            else:
+                                st.error("Error extracting palette")
+                    else:
+                        st.warning("Image URL not available for palette extraction.")
+        
+        # Display backstory if available
+        if backstory_data:
+            st.markdown("---")
+            st.markdown("#### Backstory")
+            st.markdown(backstory_data.get("backstory", ""))
+            st.caption(f"Generated for {backstory_data.get('artist', 'Unknown')} - {backstory_data.get('genre', 'Unknown')} ({backstory_data.get('style', 'Unknown')})")
+        
+        # Display palette if available
         if palette:
             st.markdown("---")
             display_color_palette(palette)
