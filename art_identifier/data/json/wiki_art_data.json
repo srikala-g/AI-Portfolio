@@ -7,7 +7,8 @@
     "genre_name": "illustration",
     "style_name": "Cubism",
     "image_name": "image_00000.jpg",
-    "image_url": "../images/image_00000.jpg"
+    "image_url": "../images/image_00000.jpg",
+    "title": null
   },
   {
     "artist": 0,
@@ -17,7 +18,8 @@
     "genre_name": "landscape",
     "style_name": "Symbolism",
     "image_name": "image_00001.jpg",
-    "image_url": "../images/image_00001.jpg"
+    "image_url": "../images/image_00001.jpg",
+    "title": null
   },
   {
     "artist": 0,
@@ -27,7 +29,8 @@
     "genre_name": "genre_painting",
     "style_name": "Cubism",
     "image_name": "image_00002.jpg",
-    "image_url": "../images/image_00002.jpg"
+    "image_url": "../images/image_00002.jpg",
+    "title": null
   },
   {
     "artist": 0,
@@ -37,7 +40,8 @@
     "genre_name": "abstract_painting",
     "style_name": "Cubism",
     "image_name": "image_00003.jpg",
-    "image_url": "../images/image_00003.jpg"
+    "image_url": "../images/image_00003.jpg",
+    "title": null
   },
   {
     "artist": 103,
@@ -47,7 +51,8 @@
     "genre_name": "religious_painting",
     "style_name": "Northern_Renaissance",
     "image_name": "image_00004.jpg",
-    "image_url": "../images/image_00004.jpg"
+    "image_url": "../images/image_00004.jpg",
+    "title": null
   },
   {
     "artist": 24,
