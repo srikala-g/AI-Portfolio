@@ -242,51 +242,33 @@ def display_color_palette(colors: list):
             st.caption(color.upper())
 
 
-def display_artwork(result):
-    """Helper to display a single artwork card."""
-    st.markdown(f"### {result.get('title', 'Unknown')}")
-    st.markdown(f"**Artist:** {result.get('artist', 'Unknown')}")
-    if result.get('genre'):
-        st.markdown(f"**Genre:** {result.get('genre')}")
-    if result.get('style'):
-        st.markdown(f"**Style:** {result.get('style')}")
-    st.markdown(f"**Similarity:** {result.get('similarity_score', 0):.4f}")
-
-    # Show image from API URL
-    image_url = resolve_image_url(result.get('image_url') or result.get('image_path'))
-    if image_url:
-        try:
-            st.image(image_url, use_container_width=True)
-        except Exception as e:
-            st.warning(f"Could not display image: {e}")
+def display_artwork(result, is_uploaded_image=False):
+    """Helper to display a single artwork card - image only."""
+    if is_uploaded_image:
+        # Display uploaded image from bytes
+        if result.get('image_bytes'):
+            try:
+                with BytesIO(result['image_bytes']) as img_buffer:
+                    st.image(Image.open(img_buffer), use_container_width=True)
+            except Exception as e:
+                st.warning(f"Could not display image: {e}")
+    else:
+        # Show image from API URL
+        image_url = resolve_image_url(result.get('image_url') or result.get('image_path'))
+        if image_url:
+            try:
+                st.image(image_url, use_container_width=True)
+            except Exception as e:
+                st.warning(f"Could not display image: {e}")
 
 
 def display_search_result(result, idx: int, search_id: str | None):
-    """Display search result card with clickable image to update details tab."""
-    st.markdown(f"#### {result.get('title', 'Unknown')}")
-    st.caption(result.get('artist', 'Unknown'))
-
+    """Display search result card with non-clickable image only."""
     image_url = resolve_image_url(result.get('image_url') or result.get('image_path'))
     if image_url:
-        params = {"selected_idx": idx, "active_tab": "details"}
-        if search_id:
-            params["search_id"] = search_id
-        query_string = urlencode(params)
-        st.markdown(
-            f'<a href="?{query_string}#artwork-details" target="_self">'
-            f'<img src="{image_url}" style="width:100%; border-radius:12px;"/>'
-            f"</a>",
-            unsafe_allow_html=True,
-        )
-        st.caption("Click artwork to view details")
+        st.image(image_url, use_container_width=True)
     else:
         st.info("Image preview unavailable.")
-
-    if result.get('similarity_score') is not None:
-        st.markdown(f"**Similarity:** {result.get('similarity_score', 0):.4f}")
-
-    if result.get('description'):
-        st.write(result.get('description'))
 
 
 def clear_search_results():
@@ -393,13 +375,25 @@ def search_by_image_and_text(image_file, query: str, top_k: int = 5):
         return []
 
 
-def get_artwork_backstory(artwork_id: str):
+def get_artwork_backstory(artwork_id: str = None, image_bytes: bytes = None):
     """Fetch backstory for an artwork from the API."""
     try:
-        response = requests.get(
-            f"{api_url}/artwork/{artwork_id}/backstory",
-            timeout=60
-        )
+        if artwork_id:
+            response = requests.get(
+                f"{api_url}/artwork/{artwork_id}/backstory",
+                timeout=60
+            )
+        elif image_bytes:
+            files = {"file": ("image.jpg", image_bytes, "image/jpeg")}
+            response = requests.post(
+                f"{api_url}/artwork/backstory-from-image",
+                files=files,
+                timeout=60
+            )
+        else:
+            st.error("Either artwork_id or image_bytes must be provided")
+            return None
+        
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
@@ -474,7 +468,11 @@ if search_id_from_query:
 selected_idx_param = _first_query_value(incoming_query_params.get("selected_idx"))
 if selected_idx_param is not None:
     try:
-        st.session_state["details_select_idx"] = int(selected_idx_param)
+        # Handle both integer indices and "uploaded" string
+        if selected_idx_param == "uploaded":
+            st.session_state["details_select_idx"] = "uploaded"
+        else:
+            st.session_state["details_select_idx"] = int(selected_idx_param)
         persist_search_state()
     except (TypeError, ValueError):
         pass
@@ -611,7 +609,7 @@ with search_tab:
                 new_search_id = str(uuid.uuid4())
                 st.session_state["current_search_id"] = new_search_id
                 st.session_state["details_select_idx"] = 0
-                st.session_state["last_search_feedback"] = ("success", f"Found {len(st.session_state['search_results'])} results. Click an artwork to view details.")
+                st.session_state["last_search_feedback"] = ("success", f"Found {len(st.session_state['search_results'])} results. Use the Artwork Details tab to view details.")
                 st.query_params["search_id"] = new_search_id
                 st.query_params["selected_idx"] = "0"
                 persist_search_state()
@@ -640,8 +638,10 @@ with search_tab:
                 display_search_result(result, idx, current_search_id)
 
         selected_idx = st.session_state.get("details_select_idx", 0)
-        selected_idx = max(0, min(selected_idx, len(stored_results) - 1))
-        st.session_state["details_select_idx"] = selected_idx
+        # Only validate if it's an integer (not "uploaded" string)
+        if isinstance(selected_idx, int):
+            selected_idx = max(0, min(selected_idx, len(stored_results) - 1))
+            st.session_state["details_select_idx"] = selected_idx
         persist_search_state()
     else:
         st.info("Upload an image or enter a description to start searching.")
@@ -650,37 +650,114 @@ with details_tab:
     st.markdown('<div id="artwork-details"></div>', unsafe_allow_html=True)
     st.header("Artwork Details")
     saved_results = st.session_state.get("search_results", [])
+    uploaded_image_bytes = st.session_state.get("last_uploaded_image")
 
-    if saved_results:
-        current_idx = st.session_state.get("details_select_idx", 0)
-        current_idx = max(0, min(current_idx, len(saved_results) - 1))
+    # Build list of all artworks: uploaded image (if exists) + search results
+    has_uploaded_image = uploaded_image_bytes is not None
+    all_artworks = []
+    
+    if has_uploaded_image:
+        all_artworks.append({
+            "id": "uploaded",
+            "type": "uploaded",
+            "image_bytes": uploaded_image_bytes,
+            "title": "Uploaded Image",
+            "thumbnail_label": "📤 Uploaded"
+        })
+    
+    for idx, result in enumerate(saved_results):
+        all_artworks.append({
+            "id": idx,
+            "type": "search_result",
+            "result": result,
+            "thumbnail_label": f"{result.get('title', 'Unknown')[:20]}..."
+        })
 
-        selected_idx = st.selectbox(
-            "Select an artwork to view details",
-            options=list(range(len(saved_results))),
-            format_func=lambda idx: f"{saved_results[idx].get('title', 'Unknown')} — {saved_results[idx].get('artist', 'Unknown')}",
-            index=current_idx
-        )
+    if all_artworks:
+        # Get current selection
+        current_selection = st.session_state.get("details_select_idx", 0)
+        
+        # Display thumbnails in a row
+        st.markdown("#### Select an artwork")
+        num_thumbnails = len(all_artworks)
+        cols = st.columns(num_thumbnails)
+        
+        for idx, artwork in enumerate(all_artworks):
+            with cols[idx]:
+                # Determine if this is the selected artwork
+                is_selected = False
+                if artwork["id"] == "uploaded" and current_selection == "uploaded":
+                    is_selected = True
+                elif isinstance(artwork["id"], int) and current_selection == artwork["id"]:
+                    is_selected = True
+                
+                # Display thumbnail with border styling - make image clickable
+                border_color = "#FF6B6B" if is_selected else "#E0E0E0"
+                border_width = "3px" if is_selected else "2px"
+                bg_color = "#FFF5F5" if is_selected else "white"
+                
+                # Build query parameters for selection
+                selection_value = "uploaded" if artwork["id"] == "uploaded" else str(artwork["id"])
+                current_search_id = st.session_state.get("current_search_id")
+                query_params = f"selected_idx={selection_value}&active_tab=details"
+                if current_search_id:
+                    query_params += f"&search_id={current_search_id}"
+                
+                # Create a clickable container div
+                container_id = f"thumb_{artwork['id']}"
+                st.markdown(
+                    f'<div id="{container_id}" style="border: {border_width} solid {border_color}; border-radius: 8px; padding: 4px; background: {bg_color}; margin-bottom: 8px; cursor: pointer;" onclick="window.location.href=\'?{query_params}#artwork-details\'">',
+                    unsafe_allow_html=True
+                )
+                
+                if artwork["type"] == "uploaded":
+                    # Display uploaded image thumbnail
+                    try:
+                        with BytesIO(artwork["image_bytes"]) as img_buffer:
+                            img = Image.open(img_buffer)
+                            # Resize for thumbnail
+                            img.thumbnail((150, 150), Image.Resampling.LANCZOS)
+                            st.image(img, use_container_width=True)
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+                else:
+                    # Display search result thumbnail
+                    result = artwork["result"]
+                    image_url = resolve_image_url(result.get('image_url') or result.get('image_path'))
+                    if image_url:
+                        st.image(image_url, use_container_width=True)
+                    else:
+                        st.info("No image")
+                
+                st.markdown('</div>', unsafe_allow_html=True)
 
-        if selected_idx != st.session_state.get("details_select_idx"):
-            st.session_state["details_select_idx"] = selected_idx
-            st.query_params["selected_idx"] = str(selected_idx)
-            current_search_id = st.session_state.get("current_search_id")
-            if current_search_id:
-                st.query_params["search_id"] = current_search_id
-            persist_search_state()
-
-        selected_result = saved_results[selected_idx]
-
-        display_artwork(selected_result)
+        # Display selected artwork (selection is handled via onclick and query params)
+        selected_result = None
+        is_uploaded = False
+        
+        if current_selection == "uploaded" and has_uploaded_image:
+            # Display uploaded image
+            is_uploaded = True
+            uploaded_result = {
+                "image_bytes": uploaded_image_bytes,
+                "title": "Uploaded Image",
+                "type": "uploaded"
+            }
+            display_artwork(uploaded_result, is_uploaded_image=True)
+            selected_result = uploaded_result
+        elif isinstance(current_selection, int) and 0 <= current_selection < len(saved_results):
+            # Display search result
+            selected_result = saved_results[current_selection]
+            display_artwork(selected_result, is_uploaded_image=False)
 
         st.markdown("---")
         
-        # Prepare keys for backstory and palette
-        artwork_id = selected_result.get("id")
-        backstory_key = artwork_id if artwork_id else f"none_{selected_idx}"
+        # Prepare keys for backstory and palette (only for search results, not uploaded images)
+        artwork_id = selected_result.get("id") if selected_result and not is_uploaded else None
+        selection_key = "uploaded" if is_uploaded else (artwork_id if artwork_id else str(current_selection))
+        backstory_key = f"backstory_{selection_key}"
         current_search_id = st.session_state.get("current_search_id")
-        palette_key = f"{current_search_id}_{selected_idx}" if current_search_id else f"none_{selected_idx}"
+        palette_key = f"palette_{current_search_id}_{selection_key}" if current_search_id else f"palette_{selection_key}"
         
         # Check if backstory and palette exist
         backstory_data = st.session_state["artwork_backstories"].get(backstory_key)
@@ -693,72 +770,330 @@ with details_tab:
             # Backstory button
             if not backstory_data:
                 if st.button("Generate Backstory", key=f"generate_backstory_{backstory_key}", type="primary", use_container_width=True):
-                    if artwork_id:
-                        with st.spinner("Generating backstory using AI..."):
-                            backstory_result = get_artwork_backstory(artwork_id)
-                            if backstory_result:
-                                st.session_state["artwork_backstories"][backstory_key] = backstory_result
-                                st.session_state["active_tab_target"] = "details"
-                                st.rerun()
-                    else:
-                        st.warning("Artwork ID not available for backstory generation.")
+                    with st.spinner("Generating backstory using AI..."):
+                        if is_uploaded and uploaded_image_bytes:
+                            # Generate backstory from uploaded image
+                            backstory_result = get_artwork_backstory(image_bytes=uploaded_image_bytes)
+                        elif artwork_id:
+                            # Generate backstory from artwork ID
+                            backstory_result = get_artwork_backstory(artwork_id=artwork_id)
+                        else:
+                            st.warning("No artwork or image available for backstory generation.")
+                            backstory_result = None
+                        
+                        if backstory_result:
+                            st.session_state["artwork_backstories"][backstory_key] = backstory_result
+                            st.session_state["active_tab_target"] = "details"
+                            st.rerun()
             else:
                 if st.button("Regenerate Backstory", key=f"regenerate_backstory_{backstory_key}", use_container_width=True):
-                    if artwork_id:
-                        with st.spinner("Regenerating backstory using AI..."):
-                            backstory_result = get_artwork_backstory(artwork_id)
-                            if backstory_result:
-                                st.session_state["artwork_backstories"][backstory_key] = backstory_result
-                                st.session_state["active_tab_target"] = "details"
-                                st.rerun()
-                    else:
-                        st.warning("Artwork ID not available for backstory generation.")
+                    with st.spinner("Regenerating backstory using AI..."):
+                        if is_uploaded and uploaded_image_bytes:
+                            # Regenerate backstory from uploaded image
+                            backstory_result = get_artwork_backstory(image_bytes=uploaded_image_bytes)
+                        elif artwork_id:
+                            # Regenerate backstory from artwork ID
+                            backstory_result = get_artwork_backstory(artwork_id=artwork_id)
+                        else:
+                            st.warning("No artwork or image available for backstory generation.")
+                            backstory_result = None
+                        
+                        if backstory_result:
+                            st.session_state["artwork_backstories"][backstory_key] = backstory_result
+                            st.session_state["active_tab_target"] = "details"
+                            st.rerun()
         
         with col2:
             # Palette button
             if not palette:
                 if st.button("Extract Palette", key=f"extract_palette_{palette_key}", type="primary", use_container_width=True):
-                    image_url = resolve_image_url(selected_result.get('image_url') or selected_result.get('image_path'))
-                    if image_url:
+                    if is_uploaded and uploaded_image_bytes:
+                        # Extract palette from uploaded image bytes
                         with st.spinner("Extracting color palette..."):
-                            palette = extract_color_palette(image_url)
-                            if palette:
-                                st.session_state["color_palettes"][palette_key] = palette
-                                st.session_state["active_tab_target"] = "details"
-                                st.rerun()
-                            else:
-                                st.error("Error extracting palette")
+                            try:
+                                # Use PIL to open from bytes directly
+                                img = Image.open(BytesIO(uploaded_image_bytes))
+                                # Convert to RGB if needed
+                                if img.mode != 'RGB':
+                                    img = img.convert('RGB')
+                                
+                                # Extract palette directly from PIL Image
+                                # Use the same logic as extract_color_palette but with PIL Image
+                                import numpy as np
+                                max_size = 400
+                                if img.width > max_size or img.height > max_size:
+                                    img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+                                
+                                img_array = np.array(img)
+                                pixels = img_array.reshape(-1, 3).astype(np.float32)
+                                
+                                # Use the same color extraction logic
+                                brightness = pixels.max(axis=1)
+                                saturation = (pixels.max(axis=1) - pixels.min(axis=1)) / (pixels.max(axis=1) + 1e-6)
+                                
+                                bright_saturated = (brightness > 180) & (saturation > 0.3)
+                                bright_unsaturated = (brightness > 180) & (saturation <= 0.3)
+                                mid_saturated = (brightness >= 80) & (brightness <= 180) & (saturation > 0.2)
+                                mid_unsaturated = (brightness >= 80) & (brightness <= 180) & (saturation <= 0.2)
+                                dark = brightness < 80
+                                
+                                samples_per_region = 2000
+                                sampled_pixels = []
+                                
+                                for mask in [bright_saturated, bright_unsaturated, mid_saturated, mid_unsaturated, dark]:
+                                    region_pixels = pixels[mask]
+                                    if len(region_pixels) > 0:
+                                        if len(region_pixels) > samples_per_region:
+                                            indices = np.random.choice(len(region_pixels), samples_per_region, replace=False)
+                                            sampled_pixels.append(region_pixels[indices])
+                                        else:
+                                            sampled_pixels.append(region_pixels)
+                                
+                                if sampled_pixels:
+                                    pixels_to_cluster = np.vstack(sampled_pixels)
+                                else:
+                                    sample_size = min(10000, len(pixels))
+                                    indices = np.random.choice(len(pixels), sample_size, replace=False)
+                                    pixels_to_cluster = pixels[indices]
+                                
+                                num_colors = 12
+                                centroids = []
+                                
+                                if bright_saturated.any():
+                                    bright_sat_pixels = pixels[bright_saturated]
+                                    idx = np.random.randint(0, len(bright_sat_pixels))
+                                    centroids.append(bright_sat_pixels[idx].copy())
+                                
+                                if mid_saturated.any() and len(centroids) < num_colors:
+                                    mid_sat_pixels = pixels[mid_saturated]
+                                    idx = np.random.randint(0, len(mid_sat_pixels))
+                                    centroids.append(mid_sat_pixels[idx].copy())
+                                
+                                remaining = num_colors - len(centroids)
+                                
+                                if remaining > 0:
+                                    if len(centroids) == 0:
+                                        first_idx = np.random.randint(0, len(pixels_to_cluster))
+                                        centroids.append(pixels_to_cluster[first_idx].copy())
+                                        remaining -= 1
+                                    
+                                    for _ in range(remaining):
+                                        distances = np.array([
+                                            min(np.linalg.norm(pixel - centroid) for centroid in centroids)
+                                            for pixel in pixels_to_cluster
+                                        ])
+                                        probabilities = distances ** 2
+                                        probabilities /= probabilities.sum()
+                                        next_idx = np.random.choice(len(pixels_to_cluster), p=probabilities)
+                                        centroids.append(pixels_to_cluster[next_idx].copy())
+                                
+                                centroids = np.array(centroids)
+                                
+                                # K-means iterations
+                                max_iterations = 30
+                                for iteration in range(max_iterations):
+                                    distances = np.array([
+                                        np.linalg.norm(pixels_to_cluster - centroid, axis=1)
+                                        for centroid in centroids
+                                    ])
+                                    assignments = np.argmin(distances, axis=0)
+                                    
+                                    new_centroids = np.array([
+                                        pixels_to_cluster[assignments == i].mean(axis=0) if np.any(assignments == i) 
+                                        else centroids[i]
+                                        for i in range(num_colors)
+                                    ])
+                                    
+                                    if np.allclose(centroids, new_centroids, atol=1.0):
+                                        break
+                                    
+                                    centroids = new_centroids
+                                
+                                # Extract final palette
+                                palette = []
+                                seen_colors = set()
+                                
+                                for i in range(num_colors):
+                                    r, g, b = centroids[i]
+                                    r, g, b = int(round(r)), int(round(g)), int(round(b))
+                                    r = max(0, min(255, r))
+                                    g = max(0, min(255, g))
+                                    b = max(0, min(255, b))
+                                    hex_color = f"#{r:02x}{g:02x}{b:02x}"
+                                    
+                                    if hex_color not in seen_colors:
+                                        palette.append(hex_color)
+                                        seen_colors.add(hex_color)
+                                
+                                if palette:
+                                    st.session_state["color_palettes"][palette_key] = palette
+                                    st.session_state["active_tab_target"] = "details"
+                                    st.rerun()
+                                else:
+                                    st.error("Error extracting palette")
+                            except Exception as e:
+                                st.error(f"Error extracting palette: {str(e)}")
                     else:
-                        st.warning("Image URL not available for palette extraction.")
+                        image_url = resolve_image_url(selected_result.get('image_url') or selected_result.get('image_path'))
+                        if image_url:
+                            with st.spinner("Extracting color palette..."):
+                                palette = extract_color_palette(image_url)
+                                if palette:
+                                    st.session_state["color_palettes"][palette_key] = palette
+                                    st.session_state["active_tab_target"] = "details"
+                                    st.rerun()
+                                else:
+                                    st.error("Error extracting palette")
+                        else:
+                            st.warning("Image URL not available for palette extraction.")
             else:
                 if st.button("Re-extract Palette", key=f"re_extract_palette_{palette_key}", use_container_width=True):
-                    image_url = resolve_image_url(selected_result.get('image_url') or selected_result.get('image_path'))
-                    if image_url:
+                    if is_uploaded and uploaded_image_bytes:
+                        # Re-extract palette from uploaded image bytes (same logic as above)
                         with st.spinner("Extracting color palette..."):
-                            new_palette = extract_color_palette(image_url)
-                            if new_palette:
-                                st.session_state["color_palettes"][palette_key] = new_palette
-                                st.session_state["active_tab_target"] = "details"
-                                st.rerun()
-                            else:
-                                st.error("Error extracting palette")
+                            try:
+                                img = Image.open(BytesIO(uploaded_image_bytes))
+                                if img.mode != 'RGB':
+                                    img = img.convert('RGB')
+                                
+                                import numpy as np
+                                max_size = 400
+                                if img.width > max_size or img.height > max_size:
+                                    img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+                                
+                                img_array = np.array(img)
+                                pixels = img_array.reshape(-1, 3).astype(np.float32)
+                                brightness = pixels.max(axis=1)
+                                saturation = (pixels.max(axis=1) - pixels.min(axis=1)) / (pixels.max(axis=1) + 1e-6)
+                                
+                                bright_saturated = (brightness > 180) & (saturation > 0.3)
+                                mid_saturated = (brightness >= 80) & (brightness <= 180) & (saturation > 0.2)
+                                
+                                samples_per_region = 2000
+                                sampled_pixels = []
+                                for mask in [bright_saturated, (brightness > 180) & (saturation <= 0.3), mid_saturated, (brightness >= 80) & (brightness <= 180) & (saturation <= 0.2), brightness < 80]:
+                                    region_pixels = pixels[mask]
+                                    if len(region_pixels) > 0:
+                                        if len(region_pixels) > samples_per_region:
+                                            indices = np.random.choice(len(region_pixels), samples_per_region, replace=False)
+                                            sampled_pixels.append(region_pixels[indices])
+                                        else:
+                                            sampled_pixels.append(region_pixels)
+                                
+                                if sampled_pixels:
+                                    pixels_to_cluster = np.vstack(sampled_pixels)
+                                else:
+                                    sample_size = min(10000, len(pixels))
+                                    indices = np.random.choice(len(pixels), sample_size, replace=False)
+                                    pixels_to_cluster = pixels[indices]
+                                
+                                num_colors = 12
+                                centroids = []
+                                if bright_saturated.any():
+                                    bright_sat_pixels = pixels[bright_saturated]
+                                    idx = np.random.randint(0, len(bright_sat_pixels))
+                                    centroids.append(bright_sat_pixels[idx].copy())
+                                if mid_saturated.any() and len(centroids) < num_colors:
+                                    mid_sat_pixels = pixels[mid_saturated]
+                                    idx = np.random.randint(0, len(mid_sat_pixels))
+                                    centroids.append(mid_sat_pixels[idx].copy())
+                                
+                                remaining = num_colors - len(centroids)
+                                if remaining > 0:
+                                    if len(centroids) == 0:
+                                        first_idx = np.random.randint(0, len(pixels_to_cluster))
+                                        centroids.append(pixels_to_cluster[first_idx].copy())
+                                        remaining -= 1
+                                    for _ in range(remaining):
+                                        distances = np.array([min(np.linalg.norm(pixel - centroid) for centroid in centroids) for pixel in pixels_to_cluster])
+                                        probabilities = distances ** 2
+                                        probabilities /= probabilities.sum()
+                                        next_idx = np.random.choice(len(pixels_to_cluster), p=probabilities)
+                                        centroids.append(pixels_to_cluster[next_idx].copy())
+                                
+                                centroids = np.array(centroids)
+                                max_iterations = 30
+                                for iteration in range(max_iterations):
+                                    distances = np.array([np.linalg.norm(pixels_to_cluster - centroid, axis=1) for centroid in centroids])
+                                    assignments = np.argmin(distances, axis=0)
+                                    new_centroids = np.array([pixels_to_cluster[assignments == i].mean(axis=0) if np.any(assignments == i) else centroids[i] for i in range(num_colors)])
+                                    if np.allclose(centroids, new_centroids, atol=1.0):
+                                        break
+                                    centroids = new_centroids
+                                
+                                palette = []
+                                seen_colors = set()
+                                for i in range(num_colors):
+                                    r, g, b = centroids[i]
+                                    r, g, b = int(round(r)), int(round(g)), int(round(b))
+                                    r, g, b = max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b))
+                                    hex_color = f"#{r:02x}{g:02x}{b:02x}"
+                                    if hex_color not in seen_colors:
+                                        palette.append(hex_color)
+                                        seen_colors.add(hex_color)
+                                
+                                if palette:
+                                    st.session_state["color_palettes"][palette_key] = palette
+                                    st.session_state["active_tab_target"] = "details"
+                                    st.rerun()
+                                else:
+                                    st.error("Error extracting palette")
+                            except Exception as e:
+                                st.error(f"Error extracting palette: {str(e)}")
                     else:
-                        st.warning("Image URL not available for palette extraction.")
+                        image_url = resolve_image_url(selected_result.get('image_url') or selected_result.get('image_path'))
+                        if image_url:
+                            with st.spinner("Extracting color palette..."):
+                                new_palette = extract_color_palette(image_url)
+                                if new_palette:
+                                    st.session_state["color_palettes"][palette_key] = new_palette
+                                    st.session_state["active_tab_target"] = "details"
+                                    st.rerun()
+                                else:
+                                    st.error("Error extracting palette")
+                        else:
+                            st.warning("Image URL not available for palette extraction.")
         
         # Display backstory if available
         if backstory_data:
             st.markdown("---")
+            st.markdown("#### Artwork Information")
+            # Display all metadata from backstory
+            title = backstory_data.get("title")
+            artist = backstory_data.get("artist")
+            genre = backstory_data.get("genre")
+            style = backstory_data.get("style")
+            style_features = backstory_data.get("style_features", [])
+            
+            if title:
+                st.markdown(f"**Title:** {title}")
+            if artist:
+                st.markdown(f"**Artist:** {artist}")
+            if genre:
+                st.markdown(f"**Genre:** {genre}")
+            if style:
+                st.markdown(f"**Style:** {style}")
+            
+            # Display salient style features in an expandable section
+            if style_features:
+                with st.expander("**Salient Style Features**", expanded=False):
+                    if isinstance(style_features, list):
+                        for feature in style_features:
+                            st.markdown(f"• {feature}")
+                    else:
+                        st.markdown(f"• {style_features}")
+            
+            st.markdown("---")
             st.markdown("#### Backstory")
             st.markdown(backstory_data.get("backstory", ""))
-            st.caption(f"Generated for {backstory_data.get('artist', 'Unknown')} - {backstory_data.get('genre', 'Unknown')} ({backstory_data.get('style', 'Unknown')})")
+            if backstory_data.get("is_image_analysis"):
+                st.caption("Generated from image analysis")
+            else:
+                st.caption("Generated using artwork metadata and similar artworks")
         
         # Display palette if available
         if palette:
             st.markdown("---")
             display_color_palette(palette)
-
-        last_text_query = st.session_state.get("last_text_query")
-        if last_text_query:
-            st.markdown(f"**Last description provided:** {last_text_query}")
     else:
         st.info("Run a search in the Search tab to view artwork details.")

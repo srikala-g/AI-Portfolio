@@ -133,7 +133,7 @@ async def get_artwork_backstory(artwork_id: str):
         artwork_id: ID of the artwork (e.g., "shard1_0" or numeric index)
     
     Returns:
-        JSON response with backstory and metadata
+        JSON response with backstory, title, and metadata
     """
     generator = get_backstory_generator()
     if generator is None:
@@ -143,10 +143,38 @@ async def get_artwork_backstory(artwork_id: str):
         )
     
     try:
-        result = generator.generate_backstory(artwork_id)
+        result = generator.generate_backstory(artwork_id=artwork_id)
         return JSONResponse(content=result)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating backstory: {str(e)}")
+
+@app.post("/artwork/backstory-from-image")
+async def get_backstory_from_image(file: UploadFile = File(...)):
+    """
+    Generate a backstory for an uploaded image.
+    
+    Args:
+        file: Uploaded image file
+    
+    Returns:
+        JSON response with backstory, title, and metadata
+    """
+    generator = get_backstory_generator()
+    if generator is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Backstory generation is not available. Please set OPENAI_API_KEY environment variable."
+        )
+    
+    try:
+        contents = await file.read()
+        Image.open(io.BytesIO(contents))  # validate image
+        result = generator.generate_backstory(image_bytes=contents)
+        return JSONResponse(content=result)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating backstory: {str(e)}")
 
@@ -158,6 +186,7 @@ async def root():
             "/search/text",
             "/search/image",
             "/search/image-and-text",
-            "/artwork/{artwork_id}/backstory"
+            "/artwork/{artwork_id}/backstory",
+            "/artwork/backstory-from-image"
         ]
     }
