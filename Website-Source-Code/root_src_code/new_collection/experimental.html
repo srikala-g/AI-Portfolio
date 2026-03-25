@@ -1,0 +1,334 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Under the Yellow Tree</title>
+<link href="../css/style01.css" rel="stylesheet" type="text/css" />
+<link href="../css/patch_home.css" rel="stylesheet" type="text/css" />
+
+<style>
+body {margin:0px; background-color:#000000;}
+
+.main_placeholder {max-width:1000px; margin-left:auto; margin-right:auto;}
+.header_placeholder {border-bottom:solid 1px #4c4c4c; padding:8px 30px; margin-bottom:15px; font-family:Arial, Helvetica, sans-serif; font-size:22px; font-weight:normal; color:#febe10; text-align:center;}
+
+.catalog_placeholder {max-width:940px; margin-left:auto; margin-right:auto;}
+
+.slider_main_container {position:relative; top:0px; left:0px; width:890px; height:700px; background:#000000; overflow:hidden; margin-left:auto; margin-right:auto;}
+
+.loading {position:absolute; top:0px; left:0px;}
+.loading_div01 {filter:alpha(opacity=70); opacity:0.7; position:absolute; display:block; background-color:#000000; top:0px; left:0px; width:100%; height:100%;}
+.loading_div02 {position:absolute; display:block; background:url(../pages/images/slideset/loading.gif) no-repeat center center; top:0px; left:0px;width:100%; height:100%;}
+
+.slides_container {cursor:move; position:absolute; left:290px; top:0px; width:600px; height:600px; overflow:hidden;}
+
+/* jssor slider arrow navigator skin 05 css */
+.jssora05l, .jssora05r, .jssora05ldn, .jssora05rdn {position:absolute; cursor:pointer; display:block; background:url(../catalog_new/images/slideset/a17.png) no-repeat; overflow:hidden;}
+.jssora05l {background-position:-10px -40px;}
+.jssora05r {background-position:-70px -40px;}
+.jssora05l:hover {background-position:-130px -40px;}
+.jssora05r:hover {background-position:-190px -40px;}
+.jssora05ldn {background-position:-250px -40px;}
+.jssora05rdn {background-position:-310px -40px;}
+/* jssor slider arrow navigator skin 05 css */
+
+/* jssor slider thumbnail navigator skin 02 css */
+.thumbnail_style01 {position:absolute; width:240px; height:299px; top:0px; left:0px; background:#111111;}
+
+.jssort02 .w {position:absolute; top:0px; left:0px; width:100%; height:100%;}
+.jssort02 .c {position:absolute; top:0px; left:0px; width:56px; height:56px; border:solid 2px #424242;}
+.jssort02 .p:hover .c, .jssort02 .pav:hover .c, .jssort02 .pav .c  {background:url(../pages/images/slideset/t01.png) center center; border-width:0px; top:0px; left:0px; width:56px; height:56px; border:solid 2px #FFFFFF;}
+.jssort02 .p:hover .c, .jssort02 .pav:hover .c {top:0px; left:0px; width:58px; height:58px; border:solid 1px #FFFFFF;}
+
+.thumbnail_slides {cursor:move;}
+.thumbnail_thumbnailtemplate {width:100%; height:100%; border:none; position:absolute; top:0; left:0;}
+/* jssor slider thumbnail navigator skin 02 css */
+</style>
+
+<script type="text/javascript" src="../catalog_new/js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="../catalog_new/js/jssor.js"></script>
+<script type="text/javascript" src="../catalog_new/js/jssor.slider.js"></script>
+
+<script type="text/javascript">
+
+jQuery(document).ready(function ($) {
+var _SlideshowTransitions = [
+//Zoom- in
+{$Duration: 1200, $Zoom: 0, $Easing: { $Zoom: $JssorEasing$.$EaseInCubic, $Opacity: $JssorEasing$.$EaseOutQuad }, $Opacity: 2 },
+//Zoom+ out
+{$Duration: 1000, $Zoom: 0, $SlideOut: true, $Easing: { $Zoom: $JssorEasing$.$EaseInExpo, $Opacity: $JssorEasing$.$EaseLinear }, $Opacity: 2 },
+ 
+];
+
+var options = {
+$AutoPlay: true,                                    //[Optional] Whether to auto play, to enable slideshow, this option must be set to true, default value is false
+$AutoPlayInterval: 5000,                            //[Optional] Interval (in milliseconds) to go for next slide since the previous stopped if the slider is auto playing, default value is 3000
+$PauseOnHover: 1,                                //[Optional] Whether to pause when mouse over if a slider is auto playing, 0 no pause, 1 pause for desktop, 2 pause for touch device, 3 pause for desktop and touch device, 4 freeze for desktop, 8 freeze for touch device, 12 freeze for desktop and touch device, default value is 1
+
+$DragOrientation: 3,                                //[Optional] Orientation to drag slide, 0 no drag, 1 horizental, 2 vertical, 3 either, default value is 1 (Note that the $DragOrientation should be the same as $PlayOrientation when $DisplayPieces is greater than 1, or parking position is not 0)
+$ArrowKeyNavigation: true,   			            //[Optional] Allows keyboard (arrow key) navigation or not, default value is false
+$SlideDuration: 600,                                //Specifies default duration (swipe) for slide in milliseconds
+
+$SlideshowOptions: {                                //[Optional] Options to specify and enable slideshow or not
+$Class: $JssorSlideshowRunner$,                 //[Required] Class to create instance of slideshow
+$Transitions: _SlideshowTransitions,            //[Required] An array of slideshow transitions to play slideshow
+$TransitionsOrder: 1,                           //[Optional] The way to choose transition to play slide, 1 Sequence, 0 Random
+$ShowLink: true                                    //[Optional] Whether to bring slide link on top of the slider when slideshow is running, default value is false
+},
+
+$ArrowNavigatorOptions: {                       //[Optional] Options to specify and enable arrow navigator or not
+$Class: $JssorArrowNavigator$,              //[Requried] Class to create arrow navigator instance
+$ChanceToShow: 1,                               //[Required] 0 Never, 1 Mouse Over, 2 Always
+$AutoCenter: 2,                                 //[Optional] Auto center navigator in parent container, 0 None, 1 Horizontal, 2 Vertical, 3 Both, default value is 0
+$Steps: 1                                       //[Optional] Steps to go for each navigation request, default value is 1
+},
+
+$ThumbnailNavigatorOptions: {                       //[Optional] Options to specify and enable thumbnail navigator or not
+$Class: $JssorThumbnailNavigator$,              //[Required] Class to create thumbnail navigator instance
+$ChanceToShow: 2,                               //[Required] 0 Never, 1 Mouse Over, 2 Always
+
+$ActionMode: 1,                                 //[Optional] 0 None, 1 act by click, 2 act by mouse hover, 3 both, default value is 1
+$Lanes: 3,                                      //[Optional] Specify lanes to arrange thumbnails, default value is 1
+$SpacingX: 6,                                   //[Optional] Horizontal space between each thumbnail in pixel, default value is 0
+$SpacingY: 6,                                   //[Optional] Vertical space between each thumbnail in pixel, default value is 0
+$DisplayPieces: 10,                             //[Optional] Number of pieces to display, default value is 1
+$ParkingPosition: 0,                          //[Optional] The offset position to park thumbnail
+$Orientation: 2                                //[Optional] Orientation to arrange thumbnails, 1 horizental, 2 vertical, default value is 1
+}
+};
+
+var jssor_slider1 = new $JssorSlider$("slider1_container", options);
+//responsive code begin
+//you can remove responsive code if you don't want the slider scales while window resizes
+function ScaleSlider() {
+var parentWidth = jssor_slider1.$Elmt.parentNode.clientWidth;
+if (parentWidth)
+jssor_slider1.$ScaleWidth(Math.max(Math.min(parentWidth, 890), 300));
+else
+window.setTimeout(ScaleSlider, 30);
+}
+ScaleSlider();
+
+$(window).bind("load", ScaleSlider);
+$(window).bind("resize", ScaleSlider);
+$(window).bind("orientationchange", ScaleSlider);
+//responsive code end
+});
+</script>
+<script type="text/javascript">
+function showPopup(){
+$('#overlay').fadeIn('fast', function(){$('#popup').show();}); }
+function hidePopup(){
+$('#popup').fadeOut('fast', function(){$('#overlay').hide();});        
+}
+</script>
+</head>
+
+<body class="body02" onload="MM_preloadImages('../images/f_leaves_over.png')">
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td align="center" valign="top">
+<table width="1128" border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td width="84" align="left" valign="top"></td>
+<td width="960" align="left" valign="top">
+<table width="960" border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td height="51" align="right" valign="top" class="nav_main_placeholder">
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td height="19" colspan="11" align="left" valign="top"></td>
+</tr>
+<tr>
+<td align="left" valign="top" class="nav_link02"><a href="../index.html">HOME</a></td>
+<td align="left" valign="top"><img src="../images/transparent.gif" width="35" height="1" /></td>
+<td align="left" valign="top" class="nav_link02"><a href="../pages/about.html">ABOUT</a></td>
+<td align="left" valign="top"><img src="../images/transparent.gif" width="35" height="1" /></td>
+<td align="left" valign="top" class="nav_link01">WORKS</td>
+<td align="left" valign="top"><img src="../images/transparent.gif" width="35" height="1" /></td>
+<td align="left" valign="top" class="nav_link02"><a href="../pages/media.html">MEDIA</a></td>
+<td align="left" valign="top" class="nav_link02"><img src="../images/transparent.gif" width="35" height="1" /></td>
+<td align="left" valign="top" class="nav_link02"><a href="../pages/album.html">ALBUM</a></td>
+<td align="left" valign="top"><img src="../images/transparent.gif" width="35" height="1" /></td>
+<td align="left" valign="top" class="nav_link02"><a href="../pages/testimonials.html">TESTIMONIALS</a></td>
+<td align="left" valign="top" class="nav_link02"><img src="../images/transparent.gif" width="35" height="1" /></td>
+<td align="left" valign="top" class="nav_link02"><a href="../pages/contact.html">CONTACT</a></td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td height="4" align="left" valign="top"></td>
+</tr>
+<tr>
+<td align="left" valign="top" class="l2_logo_main_placeholder"><a href="../index_test.html"><img src="../images/logo02.png" border="0" /></a></td>
+</tr>
+<tr>
+<td height="15" align="left" valign="top"></td>
+</tr>
+<tr>
+<td align="left" valign="top">
+<table width="960" border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td height="35" align="center" valign="top" class="block01_top_div">
+<table width="880" border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td align="right" valign="top">
+<table width="880" border="0" cellspacing="0" cellpadding="0">
+<tr>
+    <td colspan="3" align="left" valign="top" height="10"></td>
+    </tr>
+  <tr>
+    <td width="293" align="left" valign="top">&nbsp;</td>
+    <td width="89" align="left" valign="top">&nbsp;</td>
+    <td width="498" align="right" valign="top"><a href="the_shift.html" class="page_header_link_2">The Shift</a>&nbsp; <span class="page_header_link_3">|</span> &nbsp;<a href="../new_collection/samsara.html" class="page_header_link_2">Samsara</a>&nbsp; <span class="page_header_link_3">|</span> &nbsp;<a href="bidriware.html" class="page_header_link_2">Bidriware</a>&nbsp; <span class="page_header_link_3">|</span> &nbsp;<a href="ambient.html" class="page_header_link_2">Ambient</a>&nbsp; <span class="page_header_link_3">|</span> &nbsp;<span class="page_header_link_1">Experimental</span>&nbsp; <span class="page_header_link_3">|</span> &nbsp;<a href="../pages/works.html" class="page_header_link_2">Awdawp</a></td>
+  </tr>
+</table>
+<!--<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td height="2" colspan="3" align="left" valign="middle"></td>
+</tr>
+<tr>
+<td align="left" valign="middle"><img src="../images/header_left_bg.png" /></td>
+<td align="left" valign="middle" class="page_header">Works</td>
+<td align="left" valign="middle"><img src="../images/header_right_bg.png" /></td>
+</tr>
+</table>-->
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" class="block01_mid_div">
+<table width="880" border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td align="left" valign="top" class="l2_body_block01">
+<table width="880" border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td height="30" align="left" valign="top"><img src="../images/header/Experimental.png" /><br /><img src="../images/transparent.gif" width="1" height="5" /><br />
+  <img src="../images/divider01.gif" /><br /> <br />
+  <br /></td>
+</tr>
+<tr>
+<td align="left" valign="top">
+<table width="880" border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td align="left" valign="top">
+<div id="slider1_container" class="slider_main_container">
+<!-- Loading Screen -->
+<div u="loading" class="loading">
+<div class="loading_div01"></div>
+<div class="loading_div02"></div>
+</div>
+<!-- Loading Screen -->
+
+<!-- Slides Container -->
+<div u="slides" class="slides_container">
+<div>
+<img u="image" src="images/slideset/experimental/01.jpg" />
+<img u="thumb" src="images/slideset/experimental/thumb-01.jpg" />
+</div>
+<div>
+<img u="image" src="images/slideset/experimental/02.jpg" />
+<img u="thumb" src="images/slideset/experimental/thumb-02.jpg" />
+</div>
+<div>
+<img u="image" src="images/slideset/experimental/03.jpg" />
+<img u="thumb" src="images/slideset/experimental/thumb-03.jpg" />
+</div>
+<div>
+<img u="image" src="images/slideset/experimental/04.jpg" />
+<img u="thumb" src="images/slideset/experimental/thumb-04.jpg" />
+</div>  
+          
+          
+</div>
+<!-- Slides Container -->
+
+<!-- Arrow Navigator Skin Begin -->
+<span u="arrowleft" class="jssora05l" style="width:40px; height:40px; top:158px; left:298px;"></span>
+<span u="arrowright" class="jssora05r" style="width:40px; height:40px; top:158px; right:8px"></span>
+<!-- Arrow Navigator Skin End -->
+
+<!-- Thumbnail Navigator Skin Begin -->
+<div style="width:240px; height:600px; background:#111111;">
+<div u="thumbnavigator" class="jssort02 thumbnail_style01">
+<div u="slides" class="thumbnail_slides">
+<div u="prototype" class="p" style="position:absolute; width:60px; height:60px; top:0px; left:0;">
+<div class=w><div u="thumbnailtemplate" class="thumbnail_thumbnailtemplate"></div></div>
+<div class=c></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Thumbnail Navigator Skin End -->
+</div></td>
+</tr>
+<tr>
+<td align="left" valign="top"><a href="https://www.creativeresilience-unesco.org" target="_blank" class="page_header_link"><strong>Creative Resilience Exhibition - Unesco, Paris</strong></a></td>
+</tr>
+<tr>
+<td height="50" align="left" valign="top"></td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td height="30" align="left" valign="top"></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td height="35" align="left" valign="top" class="block01_bottom_div">
+<div class="f_leaves_div"><a href="javascript:void()" onclick="showPopup()" onmouseout="MM_swapImgRestore()" onmouseover="MM_swapImage('Image12','','../images/f_leaves_over.png',1)"><img src="../images/f_leaves_normal.png" name="Image12" border="0" id="Image12" /></a></div>
+<div id='overlay' onclick="hidePopup()"></div>
+<div id="popup">
+<div class="top01"></div>
+<div class="mid01">
+<div class="popup_close_div" align="right"><a href="javascript:void()" onclick="hidePopup()"><img src="../images/modal/modal_close01.png" border="0" /></a></div>
+<div class="popup_header_div">There are painters who transform the sun to a yellow spot, but there are others who with the help of their art and their intelligence transfer a yellow spot into the sun.<br /><br />
+<span class="name_text">- Pablo Picasso</span></div>
+<div class="popup_image_div">
+<div class="leaves"></div>
+</div>
+</div>
+<div class="bottom01"></div>
+</div>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td align="left" valign="top">
+<div class="footer_main_placeholder" align="center"><a href="../index.html" class="footer_link01">Home</a><span class="link_divider01">|</span><a href="../pages/about.html" class="footer_link01">About</a><span class="link_divider01">|</span><a href="../pages/works.html" class="footer_link01">Works</a><span class="link_divider01">|</span><a href="../pages/media.html" class="footer_link01">Media</a><span class="link_divider01">|</span><a href="../pages/album.html" class="footer_link01">Album</a><span class="link_divider01">|</span><a href="../pages/testimonials.html" class="footer_link01">Testimonials</a><span class="link_divider01">|</span><a href="../pages/contact.html" class="footer_link01">Contact</a><br />
+&copy; 2022 All Rights Reserved by Srikala Gangi Reddy.<br />
+Email: <a href="mailto: Srikala.gangi.reddy@gmail.com" target="_parent" class="footer_link02">srikala.gangi.reddy@gmail.com</a><span class="link_divider01">|</span>Phone: 91-9980563044<br />
+Copy or usage of any image or part or concept from any page of this website is prohibited.<br />
+ </div>
+</td>
+</tr>
+</table>
+</td>
+<td width="84" align="left" valign="top">&nbsp;</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-45286902-1', 'undertheyellowtree.com');
+  ga('send', 'pageview');
+
+</script>
+</body>
+</html>

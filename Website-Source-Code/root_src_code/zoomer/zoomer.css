@@ -1,0 +1,203 @@
+
+.zoomer-container div {
+	font-family: Verdana, Helvetica;
+	font-size: 10pt;
+}
+.zoomer {
+	outline: none;
+	text-decoration: none;
+}
+.zoomer img {
+	cursor: url(/graphics/zoomin.cur), pointer;
+	border: 0px;
+}
+.zoomer:hover img {
+	border-color: gray;
+}
+.zoomer-active-anchor img {
+	visibility: hidden;
+}
+.zoomer-gallery .zoomer-active-anchor img {
+	border-color: black;
+	visibility: visible;
+	cursor: default;
+}
+.zoomer-image {
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    -khtml-border-radius: 6px;
+    border-radius: 6px;
+	border-width: 15px;
+	border-style: solid;
+	border-color: #000000;
+	background: #000000;
+}
+.zoomer-wrapper, .zoomer-outline {
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    -khtml-border-radius: 6px;
+    border-radius: 6px;
+	background: #000000;
+}
+.zoomer-image-blur {
+}
+.zoomer-number {
+	font-weight: bold;
+	color: #000000;
+}
+.zoomer-caption {
+	display: none;
+	border-top: none;
+	font-size: 1em;
+	padding: 5px;
+	background: white;
+}
+.zoomer-heading {
+	display: none;
+	font-weight: bold;
+	margin: 0.4em;
+}
+.zoomer-dimming {
+	position: absolute;
+	background: black;
+}
+.zoomer-loading {
+	display: block;
+	color: black;
+	font-size: 9px;
+	font-weight: bold;
+	text-transform: uppercase;
+	text-decoration: none;
+	padding: 3px;
+	border: 1px solid white;
+	background-color: white;
+	padding-left: 22px;
+	background-image: url(graphics/loader.white.gif);
+	background-repeat: no-repeat;
+	background-position: 3px 1px;
+}
+a.zoomer-credits,
+a.zoomer-credits i {
+	padding: 2px;
+	color: silver;
+	text-decoration: none;
+	font-size: 10px;
+}
+a.zoomer-credits:hover,
+a.zoomer-credits:hover i {
+	color: white;
+	background-color: gray;
+}
+.zoomer-move, .zoomer-move * {
+	cursor: move;
+}
+.zoomer-overlay {
+	display: none;
+}
+/* Example of a semitransparent, offset closebutton */
+.closebutton {
+	position: relative;
+	top: -15px;
+	left: 15px;
+	width: 30px;
+	height: 30px;
+	cursor: pointer;
+	background: url(graphics/close.png);
+	/* NOTE! For IE6, you also need to update the zoomer-ie6.css file. */
+}
+
+/*****************************************************************************/
+/* Controls for the galleries.											   */
+/* Remove these if you are not using a gallery							   */
+/*****************************************************************************/
+.zoomer-controls {
+	width: 195px;
+	height: 40px;
+	background: url(graphics/controlbar-black-border.gif) 0 -90px no-repeat;
+	margin: 20px 15px 20px 0;
+}
+.zoomer-controls ul {
+	position: relative;
+	left: 15px;
+	height: 40px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	background: url(graphics/controlbar-black-border.gif) right -90px no-repeat;
+}
+.zoomer-controls li {
+	float: left;
+	padding: 5px 0;
+}
+.zoomer-controls a {
+	background-image: url(graphics/controlbar-black-border.gif);
+	display: block;
+	float: left;
+	height: 30px;
+	width: 30px;
+	outline: none;
+}
+.zoomer-controls a.disabled {
+	cursor: default;
+}
+.zoomer-controls a span {
+	/* hide the text for these graphic buttons */
+	display: none;
+}
+
+
+/* The CSS sprites for the controlbar */
+.zoomer-controls .zoomer-previous a {
+	background-position: 0 0;
+}
+.zoomer-controls .zoomer-previous a:hover {
+	background-position: 0 -30px;
+}
+.zoomer-controls .zoomer-previous a.disabled {
+	background-position: 0 -60px !important;
+}
+.zoomer-controls .zoomer-play a {
+	background-position: -30px 0;
+}
+.zoomer-controls .zoomer-play a:hover {
+	background-position: -30px -30px;
+}
+.zoomer-controls .zoomer-play a.disabled {
+	background-position: -30px -60px !important;
+}
+.zoomer-controls .zoomer-pause a {
+	background-position: -60px 0;
+}
+.zoomer-controls .zoomer-pause a:hover {
+	background-position: -60px -30px;
+}
+.zoomer-controls .zoomer-next a {
+	background-position: -90px 0;
+}
+.zoomer-controls .zoomer-next a:hover {
+	background-position: -90px -30px;
+}
+.zoomer-controls .zoomer-next a.disabled {
+	background-position: -90px -60px !important;
+}
+.zoomer-controls .zoomer-move a {
+	background-position: -120px 0;
+}
+.zoomer-controls .zoomer-move a:hover {
+	background-position: -120px -30px;
+}
+.zoomer-controls .zoomer-full-expand a {
+	background-position: -150px 0;
+}
+.zoomer-controls .zoomer-full-expand a:hover {
+	background-position: -150px -30px;
+}
+.zoomer-controls .zoomer-full-expand a.disabled {
+	background-position: -150px -60px !important;
+}
+.zoomer-controls .zoomer-close a {
+	background-position: -180px 0;
+}
+.zoomer-controls .zoomer-close a:hover {
+	background-position: -180px -30px;
+}

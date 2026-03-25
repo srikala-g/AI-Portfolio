@@ -1,0 +1,30 @@
+/* CSS Document */
+@font-face {
+font-family: lucida-handwriting;
+src: url("lucida-handwriting.eot") /* EOT file for IE */
+}
+@font-face {
+font-family: lucida-handwriting;
+src: url("lucida-handwriting.ttf") /* TTF file for CSS3 browsers */
+}
+
+body {margin:0px; background-color:#101010; background-image:url(../event_images/top_curtain.png), url(../event_images/new_bg_fade03.png), url(../event_images/new_bg_fade02.png), url(../event_images/new_bg_fade01.png); background-position:center top, center, center top, left top; background-repeat:no-repeat, repeat, no-repeat, no-repeat;}
+
+img {border:none;}
+.leftcurtain {width:50%; height:1200px; top:0px; left:0px; position:absolute; z-index:2;}
+.rightcurtain {width:51%; height:1200px; right:0px; top:0px; position:absolute; z-index:3;}
+.rightcurtain img, .leftcurtain img {width: 100%; height: 100%;}
+.logo {margin:0px auto; margin-top:150px;}
+.rope {position:absolute; top:-40px; left:70%; z-index:4;}
+
+.main_placeholder {width:960px; margin-left:auto; margin-right:auto; margin-top:100px; background:url(../event_images/transparent01.png); border:solid 2px #585858;  border-radius:10px; -moz-border-radius:10px;}
+.main_placeholder .div01 {padding:20px 20px 0px 40px;}
+.main_placeholder .div02 {padding:30px 40px 40px 40px;}
+
+.image_border01 {border:solid 3px #222222;}
+
+.footer_link02 {font-family:Arial, Helvetica, sans-serif; font-size:12px; font-weight:normal; color:#cccccc; text-decoration:underline;}
+.footer_link02:hover {font-family:Arial, Helvetica, sans-serif; font-size:12px; font-weight:normal; color:#cccccc; text-decoration:none;}
+
+.about_link01a {border-top:solid 1px #4c4c4c; border-right:solid 1px #4c4c4c; border-bottom:solid 1px #4c4c4c; border-left:solid 1px #4c4c4c; padding:6px 10px 6px 10px; font-family:lucida-handwriting,Arial, Helvetica, sans-serif; font-size:18px; font-weight:normal; color:#febe10; text-align:center; text-decoration:none;}
+.about_link01a:hover {font-family:lucida-handwriting,Arial, Helvetica, sans-serif; font-size:18px; font-weight:normal; color:#febe10; text-align:center; text-decoration:none;}
