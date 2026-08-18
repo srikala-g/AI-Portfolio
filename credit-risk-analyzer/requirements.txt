@@ -1,0 +1,10 @@
+# Runtime dependencies (kept in sync with pyproject.toml [project.dependencies]).
+# Hugging Face Spaces installs from this file. For local dev use: pip install -e ".[dev]"
+gradio>=5,<7
+google-genai>=1.0.0
+pypdf>=4.2.0
+pypdfium2>=4.30.0
+numpy>=1.26.0
+pandas>=2.0.0
+python-dotenv>=1.0.0
+sentence-transformers>=3.0.0

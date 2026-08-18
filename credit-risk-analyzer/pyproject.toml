@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "credit-risk-analyzer"
+version = "0.1.0"
+description = "Retrieval-augmented Q&A over financial documents, with page-level citations."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Srikala Gangi Reddy" }]
+keywords = ["rag", "llm", "financial-documents", "gradio", "gemini"]
+dependencies = [
+    "gradio>=5,<7",
+    "google-genai>=1.0.0",
+    "pypdf>=4.2.0",
+    "pypdfium2>=4.30.0",
+    "numpy>=1.26.0",
+    "pandas>=2.0.0",
+    "python-dotenv>=1.0.0",
+    # sentence-transformers pulls in torch; on macOS, prefer the CPU-only install path.
+    "sentence-transformers>=3.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6.0", "pre-commit>=3.7"]
+
+[project.urls]
+Repository = "https://github.com/srikala-g/credit-risk-analyzer"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
